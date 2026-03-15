@@ -33,10 +33,6 @@ export class UsersService {
         email: string;
         passwordHash: string;
         fullName: string;
-        phoneNumber?: string;
-        zaloLink?: string;
-        facebookLink?: string;
-        avatarUrl?: string;
     }) {
         return this.prisma.user.create({
             data,
@@ -45,7 +41,6 @@ export class UsersService {
                 email: true,
                 fullName: true,
                 phoneNumber: true,
-                zaloLink: true,
                 facebookLink: true,
                 avatarUrl: true,
                 isActive: true,

@@ -6,6 +6,8 @@
 generator client {
   provider = "prisma-client"
   output   = "../generated/prisma"
+  runtime      = "nodejs"
+  moduleFormat = "cjs"
 }
 
 datasource db {
@@ -34,7 +36,6 @@ model User {
   passwordHash String
   fullName     String
   phoneNumber  String?
-  zaloLink     String?
   facebookLink String?
   avatarUrl    String?
   isActive     Boolean   @default(true)
