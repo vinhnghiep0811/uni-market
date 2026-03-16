@@ -1,0 +1,69 @@
+import {
+    Body,
+    Controller,
+    Delete,
+    Get,
+    Param,
+    Patch,
+    Post,
+    UseGuards,
+} from '@nestjs/common';
+import { ListingsService } from './listings.service';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { CurrentUser } from '../auth/current-user.decorator';
+import { CreateListingDto } from './dto/create-listing.dto';
+import { UpdateListingDto } from './dto/update-listing.dto';
+import { UpdateListingStatusDto } from './dto/update-listing-status.dto';
+
+@Controller('listings')
+export class ListingsController {
+    constructor(private readonly listingsService: ListingsService) { }
+
+    @Get()
+    async findAll() {
+        return this.listingsService.findAll();
+    }
+
+    @Get('me')
+    @UseGuards(JwtAuthGuard)
+    async findMine(@CurrentUser() user: any) {
+        return this.listingsService.findMine(user.id);
+    }
+
+    @Get(':id')
+    async findOne(@Param('id') id: string) {
+        return this.listingsService.findOne(id);
+    }
+
+    @Post()
+    @UseGuards(JwtAuthGuard)
+    async create(@CurrentUser() user: any, @Body() dto: CreateListingDto) {
+        return this.listingsService.create(user.id, dto);
+    }
+
+    @Patch(':id')
+    @UseGuards(JwtAuthGuard)
+    async update(
+        @CurrentUser() user: any,
+        @Param('id') id: string,
+        @Body() dto: UpdateListingDto,
+    ) {
+        return this.listingsService.update(user.id, id, dto);
+    }
+
+    @Patch(':id/status')
+    @UseGuards(JwtAuthGuard)
+    async updateStatus(
+        @CurrentUser() user: any,
+        @Param('id') id: string,
+        @Body() dto: UpdateListingStatusDto,
+    ) {
+        return this.listingsService.updateStatus(user.id, id, dto);
+    }
+
+    @Delete(':id')
+    @UseGuards(JwtAuthGuard)
+    async remove(@CurrentUser() user: any, @Param('id') id: string) {
+        return this.listingsService.remove(user.id, id);
+    }
+}
