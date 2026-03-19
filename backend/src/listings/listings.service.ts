@@ -7,7 +7,9 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateListingDto } from './dto/create-listing.dto';
 import { UpdateListingDto } from './dto/update-listing.dto';
 import { UpdateListingStatusDto } from './dto/update-listing-status.dto';
+import { GetListingsQueryDto } from './dto/get-listing-query.dto';
 import { ListingStatus } from '../../generated/prisma/client';
+import { Prisma } from '../../generated/prisma/client';
 
 @Injectable()
 export class ListingsService {
@@ -61,30 +63,77 @@ export class ListingsService {
         });
     }
 
-    async findAll() {
-        return this.prisma.listing.findMany({
-            where: {
-                status: ListingStatus.PUBLISHED,
-            },
-            orderBy: {
-                createdAt: 'desc',
-            },
-            include: {
-                category: true,
-                seller: {
-                    select: {
-                        id: true,
-                        fullName: true,
-                        phoneNumber: true,
-                        facebookLink: true,
-                        avatarUrl: true,
+    async findAll(query: GetListingsQueryDto) {
+        const page = query.page ?? 1;
+        const limit = query.limit ?? 12;
+        const skip = (page - 1) * limit;
+
+        const sortBy = query.sortBy ?? 'createdAt';
+        const sortOrder = query.sortOrder ?? 'desc';
+
+        const where: Prisma.ListingWhereInput = {
+            status: ListingStatus.PUBLISHED,
+        };
+
+        if (query.categoryId) {
+            where.categoryId = query.categoryId;
+        }
+
+        if (query.search?.trim()) {
+            const keyword = query.search.trim();
+
+            where.OR = [
+                {
+                    title: {
+                        contains: keyword,
+                        mode: 'insensitive',
                     },
                 },
-                images: {
-                    orderBy: { sortOrder: 'asc' },
+                {
+                    description: {
+                        contains: keyword,
+                        mode: 'insensitive',
+                    },
                 },
+            ];
+        }
+
+        const [items, total] = await Promise.all([
+            this.prisma.listing.findMany({
+                where,
+                skip,
+                take: limit,
+                orderBy: {
+                    [sortBy]: sortOrder,
+                },
+                include: {
+                    category: true,
+                    seller: {
+                        select: {
+                            id: true,
+                            fullName: true,
+                            phoneNumber: true,
+                            facebookLink: true,
+                            avatarUrl: true,
+                        },
+                    },
+                    images: {
+                        orderBy: { sortOrder: 'asc' },
+                    },
+                },
+            }),
+            this.prisma.listing.count({ where }),
+        ]);
+
+        return {
+            data: items,
+            meta: {
+                page,
+                limit,
+                total,
+                totalPages: Math.ceil(total / limit),
             },
-        });
+        };
     }
 
     async findMine(userId: string) {

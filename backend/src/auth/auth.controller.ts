@@ -10,6 +10,7 @@ import type { Response } from "express";
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { GoogleLoginDto } from './dto/google-login.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { CurrentUser } from './current-user.decorator';
 
@@ -77,6 +78,27 @@ export class AuthController {
   //     user: result.user,
   //   };
   // }
+
+  @Post('google')
+  async googleLogin(
+    @Body() dto: GoogleLoginDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const result = await this.authService.googleLogin(dto.idToken);
+
+    res.cookie('access_token', result.accessToken, {
+      httpOnly: true,
+      secure: false,
+      path: '/',
+      sameSite: 'lax',
+      maxAge: 1000 * 60 * 60 * 24 * 7,
+    });
+
+    return {
+      ok: true,
+      user: result.user,
+    };
+  }
 
   @UseGuards(JwtAuthGuard)
   @Get('me')

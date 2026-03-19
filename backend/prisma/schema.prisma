@@ -33,18 +33,25 @@ enum ListingStatus {
 model User {
   id           String    @id @default(uuid())
   email        String    @unique
-  passwordHash String
+  passwordHash String?
   fullName     String
   phoneNumber  String?
   facebookLink String?
   avatarUrl    String?
   isActive     Boolean   @default(true)
+  provider      AuthProvider @default(LOCAL)
+  providerId    String?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
-
+  
   listings     Listing[]
 
   @@map("users")
+}
+
+enum AuthProvider {
+  LOCAL
+  GOOGLE
 }
 
 model Category {

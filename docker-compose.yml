@@ -22,6 +22,7 @@ services:
   backend:
     build:
       context: ./backend
+      target: development
     container_name: student_marketplace_backend
     restart: always
     depends_on:
@@ -35,7 +36,9 @@ services:
     volumes:
       - ./backend:/app
       - /app/node_modules
-    command: npm run start:dev
+      # - /app/dist
+    command: >
+      sh -c "npx prisma generate && npm run start:dev"
     healthcheck:
       test: ["CMD-SHELL", "wget --spider -q http://localhost:3001/health || exit 1"]
       interval: 10s
@@ -45,11 +48,16 @@ services:
   frontend:
     build:
       context: ./frontend
+      target: development
     container_name: student_marketplace_frontend
+    environment:
+      - WATCHPACK_POLLING=true
+      - NODE_OPTIONS=--max-old-space-size=1024
+      - NEXT_TELEMETRY_DISABLED=1
     restart: always
-    depends_on:
-      backend:
-        condition: service_healthy
+    # depends_on:
+    #   backend:
+    #     condition: service_healthy
     env_file:
       - ./frontend/.env.local
     ports:

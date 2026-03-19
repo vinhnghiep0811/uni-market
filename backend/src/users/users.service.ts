@@ -22,6 +22,8 @@ export class UsersService {
                 facebookLink: true,
                 avatarUrl: true,
                 isActive: true,
+                provider: true,
+                providerId: true,
                 createdAt: true,
                 updatedAt: true,
             },
@@ -43,6 +45,68 @@ export class UsersService {
                 facebookLink: true,
                 avatarUrl: true,
                 isActive: true,
+                createdAt: true,
+                updatedAt: true,
+            },
+        });
+    }
+
+    async createGoogleUser(data: {
+        email: string;
+        fullName: string;
+        avatarUrl?: string | null;
+        providerId: string;
+    }) {
+        return this.prisma.user.create({
+            data: {
+                email: data.email,
+                fullName: data.fullName,
+                avatarUrl: data.avatarUrl ?? null,
+                provider: 'GOOGLE',
+                providerId: data.providerId,
+                isActive: true,
+            },
+            select: {
+                id: true,
+                email: true,
+                fullName: true,
+                phoneNumber: true,
+                facebookLink: true,
+                avatarUrl: true,
+                isActive: true,
+                provider: true,
+                providerId: true,
+                createdAt: true,
+                updatedAt: true,
+            },
+        });
+    }
+
+    async updateGoogleUser(
+        userId: string,
+        data: {
+            fullName?: string;
+            avatarUrl?: string | null;
+            providerId?: string;
+        },
+    ) {
+        return this.prisma.user.update({
+            where: { id: userId },
+            data: {
+                ...(data.fullName !== undefined && { fullName: data.fullName }),
+                ...(data.avatarUrl !== undefined && { avatarUrl: data.avatarUrl }),
+                ...(data.providerId !== undefined && { providerId: data.providerId }),
+            },
+            select: {
+                id: true,
+                email: true,
+                fullName: true,
+                phoneNumber: true,
+                facebookLink: true,
+                avatarUrl: true,
+                isActive: true,
+                provider: true,
+                providerId: true,
                 createdAt: true,
                 updatedAt: true,
             },

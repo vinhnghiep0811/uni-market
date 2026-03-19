@@ -7,6 +7,7 @@ import {
     Patch,
     Post,
     UseGuards,
+    Query,
 } from '@nestjs/common';
 import { ListingsService } from './listings.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -14,14 +15,15 @@ import { CurrentUser } from '../auth/current-user.decorator';
 import { CreateListingDto } from './dto/create-listing.dto';
 import { UpdateListingDto } from './dto/update-listing.dto';
 import { UpdateListingStatusDto } from './dto/update-listing-status.dto';
+import { GetListingsQueryDto } from './dto/get-listing-query.dto';
 
 @Controller('listings')
 export class ListingsController {
     constructor(private readonly listingsService: ListingsService) { }
 
     @Get()
-    async findAll() {
-        return this.listingsService.findAll();
+    async findAll(@Query() query: GetListingsQueryDto) {
+        return this.listingsService.findAll(query);
     }
 
     @Get('me')
