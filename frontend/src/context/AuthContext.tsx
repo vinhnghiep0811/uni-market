@@ -9,6 +9,7 @@ import {
 } from "react";
 import { getMe, logout } from "@/lib/auth";
 import { AuthUser } from "@/types/auth";
+import { apiRequest, setAccessToken } from "@/lib/api";
 
 type AuthContextType = {
     user: AuthUser | null;
@@ -25,10 +26,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const fetchMe = async () => {
         try {
+            // 🔥 thử gọi /me trước
             const me = await getMe();
             setUser(me);
         } catch {
-            setUser(null);
+            try {
+                // 🔥 nếu fail → gọi refresh
+                const res = await apiRequest<{ accessToken: string }>("/auth/refresh", {
+                    method: "POST",
+                });
+
+                // 🔥 lưu lại access token
+                setAccessToken(res.accessToken);
+
+                // 🔥 gọi lại /me
+                const me = await getMe();
+                setUser(me);
+            } catch {
+                setUser(null);
+            }
         } finally {
             setIsLoading(false);
         }

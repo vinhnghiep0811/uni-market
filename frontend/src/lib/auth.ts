@@ -1,11 +1,13 @@
-import { apiRequest } from "./api";
+import { apiRequest, setAccessToken, clearAccessToken } from "./api";
 import { GoogleLoginResponse, AuthUser } from "@/types/auth";
 
 export async function loginWithGoogle(idToken: string) {
-  return apiRequest<GoogleLoginResponse>("/auth/google", {
+  const res = await apiRequest<GoogleLoginResponse>("/auth/google", {
     method: "POST",
     body: { idToken },
   });
+  setAccessToken(res.accessToken);
+  return res
 }
 
 export async function getMe() {
@@ -13,7 +15,6 @@ export async function getMe() {
 }
 
 export async function logout() {
-  return apiRequest<{ message: string }>("/auth/logout", {
-    method: "POST",
-  });
+  await apiRequest("/auth/logout", { method: "POST" });
+  clearAccessToken();
 }

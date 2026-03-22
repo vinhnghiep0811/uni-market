@@ -40,4 +40,5 @@ export type AuthUser = {
 export type GoogleLoginResponse = {
   ok: true;
   user: AuthUser;
+  accessToken: string;
 };

@@ -5,8 +5,11 @@ import {
   Post,
   Res,
   UseGuards,
+  Req,
+  UnauthorizedException
 } from '@nestjs/common';
 import type { Response } from "express";
+import type { Request } from "express";
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -84,19 +87,21 @@ export class AuthController {
     @Body() dto: GoogleLoginDto,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const result = await this.authService.googleLogin(dto.idToken);
+    const { user, accessToken, refreshToken } = await this.authService.googleLogin(dto.idToken);
 
-    res.cookie('access_token', result.accessToken, {
+    res.cookie('refresh_token', refreshToken, {
       httpOnly: true,
-      secure: false,
-      path: '/',
+      secure: false, // dev
       sameSite: 'lax',
+      path: '/auth/refresh',
       maxAge: 1000 * 60 * 60 * 24 * 7,
     });
 
+    // ✅ Trả access token về FE
     return {
       ok: true,
-      user: result.user,
+      user,
+      accessToken,
     };
   }
 
@@ -107,13 +112,20 @@ export class AuthController {
   }
 
   @Post('logout')
-  logout(@Res({ passthrough: true }) res: Response) {
-    res.clearCookie('access_token', {
-      httpOnly: true,
-      secure: false,
-      sameSite: 'lax',
-    });
+  async logout(@Res({ passthrough: true }) res: Response) {
+    res.clearCookie('refresh_token', {
+    path: '/auth/refresh',
+  });
 
     return { message: 'Logged out successfully' };
+  }
+
+  @Post('refresh')
+  async refresh(@Req() req: Request) {
+    const token = req.cookies['refresh_token'];
+
+    if (!token) throw new UnauthorizedException();
+
+    return this.authService.refresh(token);
   }
 }

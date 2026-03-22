@@ -77,11 +77,12 @@ export class AuthService {
             });
         }
 
-        const accessToken = await this.signToken(user.id, user.email);
-
+        const accessToken = await this.signAccessToken(user.id, user.email);
+        const refreshToken = await this.signRefreshToken(user.id)
         return {
             user,
             accessToken,
+            refreshToken,
         };
     }
 
@@ -100,7 +101,7 @@ export class AuthService {
             fullName: dto.fullName,
         });
 
-        const accessToken = await this.signToken(user.id, user.email);
+        const accessToken = await this.signAccessToken(user.id, user.email);
 
         return {
             accessToken,
@@ -128,7 +129,7 @@ export class AuthService {
         //     throw new UnauthorizedException('Invalid credentials');
         // }
 
-        const accessToken = await this.signToken(
+        const accessToken = await this.signAccessToken(
             existingUser.id,
             existingUser.email,
         );
@@ -149,14 +150,50 @@ export class AuthService {
         };
     }
 
+    async refresh(refreshToken: string) {
+        const payload = await this.jwtService.verifyAsync(refreshToken, {
+            secret: process.env.JWT_REFRESH_SECRET,
+        });
+
+        const user = await this.prisma.user.findUnique({
+            where: { id: payload.sub },
+        });
+
+        if (!user) throw new UnauthorizedException();
+
+        const accessToken = await this.signAccessToken(user.id, user.email);
+
+        return { accessToken };
+    }
+
     async getProfile(userId: string) {
         return this.usersService.findById(userId);
     }
 
-    private async signToken(userId: string, email: string) {
-        return this.jwtService.signAsync({
-            sub: userId,
-            email,
-        });
+    private async signAccessToken(userId: string, email: string) {
+        return this.jwtService.signAsync(
+            {
+                sub: userId,
+                email,
+                type: "access"
+            },
+            {
+                secret: process.env.JWT_ACCESS_SECRET,
+                expiresIn: "15m",
+            },
+        );
+    }
+
+    private async signRefreshToken(userId: string) {
+        return this.jwtService.signAsync(
+            {
+                sub: userId,
+                type: "refresh"
+            },
+            {
+                secret: process.env.JWT_REFRESH_SECRET,
+                expiresIn: "7d",
+            },
+        );
     }
 }

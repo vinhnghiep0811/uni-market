@@ -9,9 +9,39 @@ type RequestOptions = {
     body?: unknown;
 };
 
+let accessToken: string | null = null;
+
+export function setAccessToken(token: string) {
+    accessToken = token;
+}
+
+export function clearAccessToken() {
+    accessToken = null;
+}
+
+// 🔥 gọi refresh token
+async function refreshAccessToken(): Promise<string | null> {
+    try {
+        const res = await fetch(`${API_URL}/auth/refresh`, {
+            method: "POST",
+            credentials: "include",
+        });
+
+        if (!res.ok) return null;
+
+        const data = await res.json();
+        setAccessToken(data.accessToken);
+
+        return data.accessToken;
+    } catch {
+        return null;
+    }
+}
+
 export async function apiRequest<T>(
     endpoint: string,
     options: RequestOptions = {},
+    retry = true, // 🔥 tránh loop vô hạn
 ): Promise<T> {
     const { method = "GET", body } = options;
 
@@ -20,9 +50,25 @@ export async function apiRequest<T>(
         credentials: "include",
         headers: {
             "Content-Type": "application/json",
+            ...(accessToken && {
+                Authorization: `Bearer ${accessToken}`,
+            }),
         },
         body: body !== undefined ? JSON.stringify(body) : undefined,
     });
+
+    // 🔥 nếu token hết hạn
+    if (response.status === 401 && retry) {
+        const newToken = await refreshAccessToken();
+
+        if (newToken) {
+            // 🔁 retry request với token mới
+            return apiRequest<T>(endpoint, options, false);
+        } else {
+            clearAccessToken();
+            throw new Error("Unauthorized");
+        }
+    }
 
     const data = await response.json().catch(() => null);
 
