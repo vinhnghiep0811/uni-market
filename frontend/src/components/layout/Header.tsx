@@ -2,25 +2,13 @@
 
 import { Search, Bell, ShoppingCart } from "lucide-react";
 import Image from "next/image";
-import { useState, useEffect } from "react";
-import { getMe } from "@/lib/auth";
+import { useState } from "react";
+
+import { useAuth } from "@/context/AuthContext";
 
 export default function Header() {
     const [isFocused, setIsFocused] = useState(false);
-    const [avatar, setAvatar] = useState<string | null>(null);
-
-    useEffect(() => {
-        async function fetchUser() {
-            try {
-                const user = await getMe();
-                setAvatar(user.avatarUrl || null);
-            } catch (err) {
-                console.log("Not logged in");
-            }
-        }
-
-        fetchUser();
-    }, []);
+    const { user } = useAuth();
 
     return (
         <header className="sticky top-0 z-50 w-full bg-white border-b shadow-sm">
@@ -86,7 +74,7 @@ export default function Header() {
                     {/* AVATAR */}
                     <div className="w-9 h-9 rounded-full overflow-hidden border">
                         <Image
-                            src={avatar || "https://i.pravatar.cc/100"}
+                            src={user?.avatarUrl || "https://i.pravatar.cc/100"}
                             alt="avatar"
                             width={36}
                             height={36}

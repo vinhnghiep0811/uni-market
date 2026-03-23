@@ -42,3 +42,10 @@ export type GoogleLoginResponse = {
   user: AuthUser;
   accessToken: string;
 };
+
+export type UpdateProfilePayload = {
+  fullName?: string;
+  phoneNumber?: string | null;
+  facebookLink?: string | null;
+  avatarUrl?: string | null;
+};

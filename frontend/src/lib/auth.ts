@@ -1,5 +1,5 @@
 import { apiRequest, setAccessToken, clearAccessToken } from "./api";
-import { GoogleLoginResponse, AuthUser } from "@/types/auth";
+import { GoogleLoginResponse, AuthUser, UpdateProfilePayload } from "@/types/auth";
 
 export async function loginWithGoogle(idToken: string) {
   const res = await apiRequest<GoogleLoginResponse>("/auth/google", {
@@ -17,4 +17,11 @@ export async function getMe() {
 export async function logout() {
   await apiRequest("/auth/logout", { method: "POST" });
   clearAccessToken();
+}
+
+export async function updateProfile(payload: UpdateProfilePayload) {
+  return apiRequest<AuthUser>("/users/me", {
+    method: "PATCH",
+    body: payload,
+  });
 }
