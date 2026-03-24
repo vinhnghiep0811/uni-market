@@ -1,4 +1,5 @@
-import { ArrowUpRight } from "lucide-react";
+﻿import { ArrowUpRight } from "lucide-react";
+import Link from "next/link";
 
 export default function SellItemCard() {
   return (
@@ -12,13 +13,13 @@ export default function SellItemCard() {
           Reach verified students nearby and close deals faster on campus.
         </p>
 
-        <button
-          type="button"
+        <Link
+          href="/sell"
           className="mt-5 inline-flex items-center gap-2 rounded-full bg-white px-4 py-3 text-sm font-semibold text-slate-900 transition duration-200 hover:-translate-y-0.5 hover:bg-slate-100"
         >
           List an Item
           <ArrowUpRight className="h-4 w-4" />
-        </button>
+        </Link>
       </div>
     </section>
   );
