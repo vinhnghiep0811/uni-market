@@ -28,6 +28,7 @@ export type MarketplaceProduct = {
   description: string;
   price: number;
   categoryId: string;
+  categoryName: string;
   condition: Exclude<MarketplaceCondition, "All">;
   imageSrc: string;
   imageAlt: string;
@@ -36,4 +37,49 @@ export type MarketplaceProduct = {
   seller: MarketplaceSeller;
   listedAtLabel: string;
   createdAt: string;
+};
+
+export type MarketplaceCategoryApi = {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+};
+
+export type MarketplaceListingCondition =
+  | "NEW"
+  | "LIKE_NEW"
+  | "GOOD"
+  | "FAIR"
+  | "POOR";
+
+export type MarketplaceListingApi = {
+  id: string;
+  title: string;
+  description: string;
+  price: number | string;
+  condition: MarketplaceListingCondition;
+  categoryId: string;
+  createdAt: string;
+  category: MarketplaceCategoryApi;
+  seller: {
+    id: string;
+    fullName: string;
+    avatarUrl: string | null;
+  };
+  images: Array<{
+    id: string;
+    imageUrl: string;
+    sortOrder: number;
+  }>;
+};
+
+export type MarketplaceListingsResponse = {
+  data: MarketplaceListingApi[];
+  meta: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
 };

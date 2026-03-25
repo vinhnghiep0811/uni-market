@@ -1,5 +1,5 @@
-import UserProfilePage from "@/features/profile/UserProfilePage";
+﻿import ManagedUserProfilePage from "@/components/profile-page/ManagedUserProfilePage";
 
 export default function ProfilePage() {
-  return <UserProfilePage />;
+  return <ManagedUserProfilePage />;
 }

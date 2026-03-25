@@ -8,13 +8,18 @@ import {
 
 import type {
   MarketplaceCategory,
-  MarketplaceProduct,
+  MarketplaceCategoryApi,
   MarketplaceCondition,
+  MarketplaceListingApi,
+  MarketplaceListingCondition,
+  MarketplaceProduct,
   SortOption,
 } from "./types";
 
+export const MARKETPLACE_FALLBACK_IMAGE = "/images/download.jpg";
 export const MARKETPLACE_MAX_PRICE = 10_000_000;
 export const MARKETPLACE_PAGE_SIZE = 8;
+export const MARKETPLACE_FETCH_LIMIT = 50;
 
 export const SORT_OPTIONS: SortOption[] = [
   "Newest",
@@ -29,409 +34,194 @@ export const CONDITION_OPTIONS: MarketplaceCondition[] = [
   "Used",
 ];
 
-export const marketplaceCategories: MarketplaceCategory[] = [
+const CATEGORY_THEMES = [
   {
-    id: "textbooks-study-materials",
-    name: "Textbooks & Study Materials",
-    description: "Course books, review sheets, notes, and study kits.",
+    matches: ["textbook", "book", "study", "note", "course", "material"],
     icon: BookOpen,
     iconColorClassName: "bg-blue-100 text-blue-700",
     badgeClassName: "bg-blue-100 text-blue-700",
+    sellerAvatarClassName: "bg-blue-100 text-blue-700",
+    imageOverlayClassName:
+      "bg-gradient-to-t from-blue-950/55 via-blue-950/10 to-transparent",
   },
   {
-    id: "electronics",
-    name: "Electronics",
-    description: "Phones, laptops, headphones, and everyday tech.",
+    matches: ["electronic", "laptop", "phone", "tech", "device", "gadget"],
     icon: Laptop,
     iconColorClassName: "bg-violet-100 text-violet-700",
     badgeClassName: "bg-violet-100 text-violet-700",
+    sellerAvatarClassName: "bg-violet-100 text-violet-700",
+    imageOverlayClassName:
+      "bg-gradient-to-t from-violet-950/60 via-violet-950/15 to-transparent",
   },
   {
-    id: "home-appliances",
-    name: "Home Appliances",
-    description: "Compact appliances that make student life easier.",
+    matches: ["home", "appliance", "kitchen", "cook", "household"],
     icon: Home,
     iconColorClassName: "bg-amber-100 text-amber-700",
     badgeClassName: "bg-amber-100 text-amber-700",
+    sellerAvatarClassName: "bg-amber-100 text-amber-700",
+    imageOverlayClassName:
+      "bg-gradient-to-t from-amber-950/55 via-amber-950/10 to-transparent",
   },
   {
-    id: "dorm-essentials",
-    name: "Dorm Essentials",
-    description: "Storage, lighting, bedding, and room setup basics.",
+    matches: ["dorm", "room", "bedding", "storage", "essential", "furniture"],
     icon: BedDouble,
     iconColorClassName: "bg-emerald-100 text-emerald-700",
     badgeClassName: "bg-emerald-100 text-emerald-700",
+    sellerAvatarClassName: "bg-emerald-100 text-emerald-700",
+    imageOverlayClassName:
+      "bg-gradient-to-t from-emerald-950/55 via-emerald-950/10 to-transparent",
   },
   {
-    id: "others",
-    name: "Others",
-    description: "Useful finds shared across your campus community.",
+    matches: [],
     icon: Package,
     iconColorClassName: "bg-slate-200 text-slate-700",
     badgeClassName: "bg-slate-200 text-slate-700",
-  },
-];
-
-export const marketplaceCategoriesById = Object.fromEntries(
-  marketplaceCategories.map((category) => [category.id, category]),
-) as Record<string, MarketplaceCategory>;
-
-export const marketplaceProducts: MarketplaceProduct[] = [
-  {
-    id: "listing-calculus-early-transcendentals",
-    title: "Calculus Early Transcendentals 8th Edition with Notes",
-    description:
-      "Well-kept textbook bundle with highlighted formulas and final exam notes.",
-    price: 320000,
-    categoryId: "textbooks-study-materials",
-    condition: "Used",
-    imageSrc: "/images/download.jpg",
-    imageAlt: "Calculus textbook bundle",
-    imagePosition: "center 28%",
-    imageOverlayClassName:
-      "bg-gradient-to-t from-blue-950/55 via-blue-950/10 to-transparent",
-    seller: {
-      name: "An Nguyen",
-      initials: "AN",
-      avatarClassName: "bg-blue-100 text-blue-700",
-    },
-    listedAtLabel: "2 hours ago",
-    createdAt: "2026-03-23T09:15:00.000Z",
-  },
-  {
-    id: "listing-iphone-12-blue",
-    title: "iPhone 12 128GB Blue with Charger and Case",
-    description:
-      "Battery health 87%, camera works perfectly, ideal for campus use.",
-    price: 6900000,
-    categoryId: "electronics",
-    condition: "Like New",
-    imageSrc: "/images/download.jpg",
-    imageAlt: "iPhone 12 on a desk",
-    imagePosition: "center 50%",
-    imageOverlayClassName:
-      "bg-gradient-to-t from-violet-950/60 via-violet-950/15 to-transparent",
-    seller: {
-      name: "Linh Tran",
-      initials: "LT",
-      avatarClassName: "bg-violet-100 text-violet-700",
-    },
-    listedAtLabel: "3 hours ago",
-    createdAt: "2026-03-23T08:30:00.000Z",
-  },
-  {
-    id: "listing-mini-rice-cooker",
-    title: "Compact Rice Cooker for Dorm Rooms",
-    description:
-      "Easy to clean and perfect for quick meals in shared student housing.",
-    price: 450000,
-    categoryId: "home-appliances",
-    condition: "Used",
-    imageSrc: "/images/download.jpg",
-    imageAlt: "Compact rice cooker",
-    imagePosition: "center 35%",
-    imageOverlayClassName:
-      "bg-gradient-to-t from-amber-950/55 via-amber-950/10 to-transparent",
-    seller: {
-      name: "Minh Le",
-      initials: "ML",
-      avatarClassName: "bg-amber-100 text-amber-700",
-    },
-    listedAtLabel: "5 hours ago",
-    createdAt: "2026-03-23T06:45:00.000Z",
-  },
-  {
-    id: "listing-desk-lamp-usb",
-    title: "LED Desk Lamp with USB Charging Port",
-    description:
-      "Adjustable brightness, slim profile, and perfect for late-night study sessions.",
-    price: 280000,
-    categoryId: "dorm-essentials",
-    condition: "New",
-    imageSrc: "/images/download.jpg",
-    imageAlt: "LED desk lamp",
-    imagePosition: "center 42%",
-    imageOverlayClassName:
-      "bg-gradient-to-t from-emerald-950/55 via-emerald-950/10 to-transparent",
-    seller: {
-      name: "Gia Vo",
-      initials: "GV",
-      avatarClassName: "bg-emerald-100 text-emerald-700",
-    },
-    listedAtLabel: "6 hours ago",
-    createdAt: "2026-03-23T05:55:00.000Z",
-  },
-  {
-    id: "listing-noise-cancelling-headphones",
-    title: "Noise Cancelling Headphones for Study and Commute",
-    description:
-      "Comfortable fit with strong bass, includes case and charging cable.",
-    price: 1350000,
-    categoryId: "electronics",
-    condition: "Like New",
-    imageSrc: "/images/download.jpg",
-    imageAlt: "Noise cancelling headphones",
-    imagePosition: "center 22%",
-    imageOverlayClassName:
-      "bg-gradient-to-t from-violet-950/60 via-violet-950/15 to-transparent",
-    seller: {
-      name: "Bao Ho",
-      initials: "BH",
-      avatarClassName: "bg-violet-100 text-violet-700",
-    },
-    listedAtLabel: "8 hours ago",
-    createdAt: "2026-03-23T03:10:00.000Z",
-  },
-  {
-    id: "listing-engineering-drawing-kit",
-    title: "Engineering Drawing Kit with Compass and Scales",
-    description:
-      "Complete drafting set for first-year design and architecture students.",
-    price: 190000,
-    categoryId: "textbooks-study-materials",
-    condition: "New",
-    imageSrc: "/images/download.jpg",
-    imageAlt: "Engineering drawing kit",
-    imagePosition: "center 58%",
-    imageOverlayClassName:
-      "bg-gradient-to-t from-blue-950/55 via-blue-950/10 to-transparent",
-    seller: {
-      name: "Phuc Dang",
-      initials: "PD",
-      avatarClassName: "bg-blue-100 text-blue-700",
-    },
-    listedAtLabel: "10 hours ago",
-    createdAt: "2026-03-22T22:20:00.000Z",
-  },
-  {
-    id: "listing-mini-fridge",
-    title: "Mini Fridge for Shared Apartment or Dorm Space",
-    description:
-      "Runs quietly and keeps drinks cold without taking up much space.",
-    price: 2300000,
-    categoryId: "home-appliances",
-    condition: "Used",
-    imageSrc: "/images/download.jpg",
-    imageAlt: "Mini fridge in a dorm room",
-    imagePosition: "center 46%",
-    imageOverlayClassName:
-      "bg-gradient-to-t from-amber-950/55 via-amber-950/10 to-transparent",
-    seller: {
-      name: "Trang Do",
-      initials: "TD",
-      avatarClassName: "bg-amber-100 text-amber-700",
-    },
-    listedAtLabel: "12 hours ago",
-    createdAt: "2026-03-22T20:40:00.000Z",
-  },
-  {
-    id: "listing-storage-cart",
-    title: "Rolling Storage Cart for Notes, Cables, and Snacks",
-    description:
-      "Three-tier cart that fits neatly beside a study desk or bunk bed.",
-    price: 520000,
-    categoryId: "dorm-essentials",
-    condition: "Like New",
-    imageSrc: "/images/download.jpg",
-    imageAlt: "Rolling storage cart",
-    imagePosition: "center 60%",
-    imageOverlayClassName:
-      "bg-gradient-to-t from-emerald-950/55 via-emerald-950/10 to-transparent",
-    seller: {
-      name: "Nhi Bui",
-      initials: "NB",
-      avatarClassName: "bg-emerald-100 text-emerald-700",
-    },
-    listedAtLabel: "14 hours ago",
-    createdAt: "2026-03-22T18:55:00.000Z",
-  },
-  {
-    id: "listing-calculator-fx-580",
-    title: "Casio fx-580VN X Scientific Calculator",
-    description:
-      "Exam-approved calculator in excellent condition with protective cover.",
-    price: 380000,
-    categoryId: "textbooks-study-materials",
-    condition: "Like New",
-    imageSrc: "/images/download.jpg",
-    imageAlt: "Scientific calculator",
-    imagePosition: "center 34%",
-    imageOverlayClassName:
-      "bg-gradient-to-t from-blue-950/55 via-blue-950/10 to-transparent",
-    seller: {
-      name: "Khoa Pham",
-      initials: "KP",
-      avatarClassName: "bg-blue-100 text-blue-700",
-    },
-    listedAtLabel: "16 hours ago",
-    createdAt: "2026-03-22T16:25:00.000Z",
-  },
-  {
-    id: "listing-bluetooth-speaker",
-    title: "Portable Bluetooth Speaker for Small Gatherings",
-    description:
-      "Clear sound, compact body, and enough battery for a weekend trip.",
-    price: 740000,
-    categoryId: "electronics",
-    condition: "Used",
-    imageSrc: "/images/download.jpg",
-    imageAlt: "Portable bluetooth speaker",
-    imagePosition: "center 65%",
-    imageOverlayClassName:
-      "bg-gradient-to-t from-violet-950/60 via-violet-950/15 to-transparent",
-    seller: {
-      name: "Vy Truong",
-      initials: "VT",
-      avatarClassName: "bg-violet-100 text-violet-700",
-    },
-    listedAtLabel: "18 hours ago",
-    createdAt: "2026-03-22T14:50:00.000Z",
-  },
-  {
-    id: "listing-kettle-fast-boil",
-    title: "Fast-Boil Electric Kettle with Auto Shut-Off",
-    description:
-      "Reliable kettle for noodles, tea, or quick breakfasts between classes.",
-    price: 260000,
-    categoryId: "home-appliances",
-    condition: "New",
-    imageSrc: "/images/download.jpg",
-    imageAlt: "Electric kettle",
-    imagePosition: "center 18%",
-    imageOverlayClassName:
-      "bg-gradient-to-t from-amber-950/55 via-amber-950/10 to-transparent",
-    seller: {
-      name: "Tam Phan",
-      initials: "TP",
-      avatarClassName: "bg-amber-100 text-amber-700",
-    },
-    listedAtLabel: "20 hours ago",
-    createdAt: "2026-03-22T12:35:00.000Z",
-  },
-  {
-    id: "listing-desk-organizer-bundle",
-    title: "Desk Organizer Bundle with Pen Holder and Tray",
-    description:
-      "Simple neutral setup that keeps study tables tidy in smaller rooms.",
-    price: 150000,
-    categoryId: "dorm-essentials",
-    condition: "New",
-    imageSrc: "/images/download.jpg",
-    imageAlt: "Desk organizer set",
-    imagePosition: "center 38%",
-    imageOverlayClassName:
-      "bg-gradient-to-t from-emerald-950/55 via-emerald-950/10 to-transparent",
-    seller: {
-      name: "Quynh Mai",
-      initials: "QM",
-      avatarClassName: "bg-emerald-100 text-emerald-700",
-    },
-    listedAtLabel: "1 day ago",
-    createdAt: "2026-03-22T10:15:00.000Z",
-  },
-  {
-    id: "listing-bike-lock",
-    title: "Heavy-Duty Bike Lock for Daily Campus Parking",
-    description:
-      "Secure cable lock that is easy to carry in a backpack or basket.",
-    price: 210000,
-    categoryId: "others",
-    condition: "Like New",
-    imageSrc: "/images/download.jpg",
-    imageAlt: "Bike lock on a campus rack",
-    imagePosition: "center 52%",
+    sellerAvatarClassName: "bg-slate-200 text-slate-700",
     imageOverlayClassName:
       "bg-gradient-to-t from-slate-950/55 via-slate-950/10 to-transparent",
-    seller: {
-      name: "Hoang Vu",
-      initials: "HV",
-      avatarClassName: "bg-slate-200 text-slate-700",
-    },
-    listedAtLabel: "1 day ago",
-    createdAt: "2026-03-22T08:40:00.000Z",
   },
-  {
-    id: "listing-portable-whiteboard",
-    title: "Portable Whiteboard for Group Study Sessions",
-    description:
-      "Lightweight board for brainstorming, tutoring, or room schedules.",
-    price: 340000,
-    categoryId: "others",
-    condition: "Used",
-    imageSrc: "/images/download.jpg",
-    imageAlt: "Portable whiteboard for studying",
-    imagePosition: "center 44%",
-    imageOverlayClassName:
-      "bg-gradient-to-t from-slate-950/55 via-slate-950/10 to-transparent",
+] as const;
+
+function resolveCategoryTheme(category: MarketplaceCategoryApi) {
+  const haystack = `${category.slug} ${category.name}`.toLowerCase();
+
+  return (
+    CATEGORY_THEMES.find((theme) =>
+      theme.matches.some((keyword) => haystack.includes(keyword)),
+    ) ?? CATEGORY_THEMES[CATEGORY_THEMES.length - 1]
+  );
+}
+
+function formatCategoryDescription(category: MarketplaceCategoryApi) {
+  return category.description?.trim() || "Useful finds shared around campus.";
+}
+
+function getSellerInitials(name: string) {
+  const initials = name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? "")
+    .join("");
+
+  return initials || "UM";
+}
+
+function normalizePrice(value: number | string) {
+  const numericValue = Number(value);
+  return Number.isFinite(numericValue) ? numericValue : 0;
+}
+
+function formatRelativeTime(value: string) {
+  const createdAt = new Date(value).getTime();
+
+  if (Number.isNaN(createdAt)) {
+    return "Recently listed";
+  }
+
+  const diffInSeconds = Math.round((createdAt - Date.now()) / 1000);
+  const absoluteSeconds = Math.abs(diffInSeconds);
+  const relativeTimeFormat = new Intl.RelativeTimeFormat("en", {
+    numeric: "auto",
+  });
+
+  if (absoluteSeconds < 60) {
+    return relativeTimeFormat.format(diffInSeconds, "second");
+  }
+
+  const diffInMinutes = Math.round(diffInSeconds / 60);
+  if (absoluteSeconds < 60 * 60) {
+    return relativeTimeFormat.format(diffInMinutes, "minute");
+  }
+
+  const diffInHours = Math.round(diffInSeconds / (60 * 60));
+  if (absoluteSeconds < 60 * 60 * 24) {
+    return relativeTimeFormat.format(diffInHours, "hour");
+  }
+
+  const diffInDays = Math.round(diffInSeconds / (60 * 60 * 24));
+  if (absoluteSeconds < 60 * 60 * 24 * 30) {
+    return relativeTimeFormat.format(diffInDays, "day");
+  }
+
+  const diffInMonths = Math.round(diffInSeconds / (60 * 60 * 24 * 30));
+  if (absoluteSeconds < 60 * 60 * 24 * 365) {
+    return relativeTimeFormat.format(diffInMonths, "month");
+  }
+
+  const diffInYears = Math.round(diffInSeconds / (60 * 60 * 24 * 365));
+  return relativeTimeFormat.format(diffInYears, "year");
+}
+
+export function mapListingCondition(
+  condition: MarketplaceListingCondition,
+): Exclude<MarketplaceCondition, "All"> {
+  switch (condition) {
+    case "NEW":
+      return "New";
+    case "LIKE_NEW":
+      return "Like New";
+    default:
+      return "Used";
+  }
+}
+
+export function buildMarketplaceCategory(
+  category: MarketplaceCategoryApi,
+): MarketplaceCategory {
+  const theme = resolveCategoryTheme(category);
+
+  return {
+    id: category.id,
+    name: category.name,
+    description: formatCategoryDescription(category),
+    icon: theme.icon,
+    iconColorClassName: theme.iconColorClassName,
+    badgeClassName: theme.badgeClassName,
+  };
+}
+
+export function buildMarketplaceCategories(categories: MarketplaceCategoryApi[]) {
+  return categories
+    .map(buildMarketplaceCategory)
+    .sort((left, right) => left.name.localeCompare(right.name));
+}
+
+export function buildMarketplaceCategoriesById(
+  categories: MarketplaceCategoryApi[],
+) {
+  return Object.fromEntries(
+    categories.map((category) => [
+      category.id,
+      buildMarketplaceCategory(category),
+    ]),
+  ) as Record<string, MarketplaceCategory>;
+}
+
+export function mapListingToMarketplaceProduct(
+  listing: MarketplaceListingApi,
+): MarketplaceProduct {
+  const theme = resolveCategoryTheme(listing.category);
+  const sellerName = listing.seller.fullName?.trim() || "Campus seller";
+
+  return {
+    id: listing.id,
+    title: listing.title,
+    description: listing.description,
+    price: normalizePrice(listing.price),
+    categoryId: listing.categoryId,
+    categoryName: listing.category.name,
+    condition: mapListingCondition(listing.condition),
+    imageSrc: MARKETPLACE_FALLBACK_IMAGE,
+    imageAlt: listing.title,
+    imagePosition: "center",
+    imageOverlayClassName: theme.imageOverlayClassName,
     seller: {
-      name: "Nam Ngo",
-      initials: "NN",
-      avatarClassName: "bg-slate-200 text-slate-700",
+      name: sellerName,
+      initials: getSellerInitials(sellerName),
+      avatarClassName: theme.sellerAvatarClassName,
     },
-    listedAtLabel: "1 day ago",
-    createdAt: "2026-03-22T07:10:00.000Z",
-  },
-  {
-    id: "listing-macroeconomics-textbook",
-    title: "Macroeconomics Textbook plus Lecture Summary Sheets",
-    description:
-      "Includes clean lecture summaries and review questions for midterms.",
-    price: 290000,
-    categoryId: "textbooks-study-materials",
-    condition: "Used",
-    imageSrc: "/images/download.jpg",
-    imageAlt: "Macroeconomics textbook",
-    imagePosition: "center 24%",
-    imageOverlayClassName:
-      "bg-gradient-to-t from-blue-950/55 via-blue-950/10 to-transparent",
-    seller: {
-      name: "Hanh Ly",
-      initials: "HL",
-      avatarClassName: "bg-blue-100 text-blue-700",
-    },
-    listedAtLabel: "2 days ago",
-    createdAt: "2026-03-21T15:40:00.000Z",
-  },
-  {
-    id: "listing-second-monitor",
-    title: "24-inch Second Monitor for Coding and Design Work",
-    description:
-      "Sharp display with HDMI cable included, ideal for productive setups.",
-    price: 2400000,
-    categoryId: "electronics",
-    condition: "Like New",
-    imageSrc: "/images/download.jpg",
-    imageAlt: "Second monitor on a study desk",
-    imagePosition: "center 48%",
-    imageOverlayClassName:
-      "bg-gradient-to-t from-violet-950/60 via-violet-950/15 to-transparent",
-    seller: {
-      name: "Duc Bui",
-      initials: "DB",
-      avatarClassName: "bg-violet-100 text-violet-700",
-    },
-    listedAtLabel: "2 days ago",
-    createdAt: "2026-03-21T13:20:00.000Z",
-  },
-  {
-    id: "listing-bedding-set",
-    title: "Neutral Bedding Set for Single Dorm Bed",
-    description:
-      "Soft sheets, pillowcase, and lightweight blanket for semester move-in.",
-    price: 560000,
-    categoryId: "dorm-essentials",
-    condition: "New",
-    imageSrc: "/images/download.jpg",
-    imageAlt: "Dorm bedding set",
-    imagePosition: "center 56%",
-    imageOverlayClassName:
-      "bg-gradient-to-t from-emerald-950/55 via-emerald-950/10 to-transparent",
-    seller: {
-      name: "Yen Tran",
-      initials: "YT",
-      avatarClassName: "bg-emerald-100 text-emerald-700",
-    },
-    listedAtLabel: "2 days ago",
-    createdAt: "2026-03-21T11:05:00.000Z",
-  },
-];
+    listedAtLabel: formatRelativeTime(listing.createdAt),
+    createdAt: listing.createdAt,
+  };
+}
