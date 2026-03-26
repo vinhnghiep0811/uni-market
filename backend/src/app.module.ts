@@ -9,6 +9,7 @@ import { AuthModule } from './auth/auth.module';
 import { CategoriesModule } from './categories/categories.module';
 import { ListingsModule } from './listings/listings.module';
 import { FavoritesModule } from './favorites/favorites.module';
+import { TransactionsModule } from './transactions/transactions.module';
 
 @Module({
   imports: [ConfigModule.forRoot({isGlobal: true,}),
@@ -19,6 +20,7 @@ import { FavoritesModule } from './favorites/favorites.module';
             CategoriesModule,
             ListingsModule,
             FavoritesModule,
+            TransactionsModule,
           ],
   controllers: [AppController],
   providers: [AppService],

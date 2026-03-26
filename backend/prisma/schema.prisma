@@ -4,8 +4,8 @@
 // Get a free hosted Postgres database in seconds: `npx create-db`
 
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider     = "prisma-client"
+  output       = "../generated/prisma"
   runtime      = "nodejs"
   moduleFormat = "cjs"
 }
@@ -25,29 +25,40 @@ enum ListingCondition {
 enum ListingStatus {
   DRAFT
   PUBLISHED
-  RESERVED
+  IN_TRANSACTION
   SOLD
   HIDDEN
 }
 
 model User {
-  id           String    @id @default(uuid())
-  email        String    @unique
+  id           String       @id @default(uuid())
+  email        String       @unique
   passwordHash String?
   fullName     String
   phoneNumber  String?
   facebookLink String?
   avatarUrl    String?
-  isActive     Boolean   @default(true)
-  provider      AuthProvider @default(LOCAL)
-  providerId    String?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-  
-  listings     Listing[]
-  favorites    Favorite[]
+  isActive     Boolean      @default(true)
+  provider     AuthProvider @default(LOCAL)
+  providerId   String?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  listings  Listing[]
+  favorites Favorite[]
+
+  buyerTransactions  Transaction[] @relation("BuyerTransactions")
+  sellerTransactions Transaction[] @relation("SellerTransactions")
 
   @@map("users")
+}
+
+enum TransactionStatus {
+  PENDING
+  ACCEPTED
+  COMPLETED
+  CANCELLED
+  REJECTED
 }
 
 enum AuthProvider {
@@ -56,39 +67,41 @@ enum AuthProvider {
 }
 
 model Category {
-  id          String    @id @default(uuid())
-  name        String    @unique
-  slug        String    @unique
+  id          String   @id @default(uuid())
+  name        String   @unique
+  slug        String   @unique
   description String?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  listings    Listing[]
+  listings Listing[]
 
   @@map("categories")
 }
 
 model Listing {
-  id          String            @id @default(uuid())
+  id          String           @id @default(uuid())
   title       String
   description String
-  price       Decimal           @db.Decimal(12, 2)
+  price       Decimal          @db.Decimal(12, 2)
   condition   ListingCondition
-  status      ListingStatus     @default(DRAFT)
+  status      ListingStatus    @default(DRAFT)
   location    String?
   contactNote String?
 
-  sellerId    String
-  categoryId  String
+  sellerId   String
+  categoryId String
 
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  seller      User              @relation(fields: [sellerId], references: [id], onDelete: Cascade)
-  category    Category          @relation(fields: [categoryId], references: [id], onDelete: Restrict)
-  images      ListingImage[]
-  favorites   Favorite[]
-  
+  seller    User           @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  category  Category       @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  images    ListingImage[]
+  favorites Favorite[]
+
+  transactions Transaction[]
+
   @@index([sellerId])
   @@index([categoryId])
   @@index([status])
@@ -103,7 +116,7 @@ model ListingImage {
   sortOrder Int      @default(0)
   createdAt DateTime @default(now())
 
-  listing   Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
 
   @@index([listingId])
   @@map("listing_images")
@@ -120,4 +133,28 @@ model Favorite {
 
   @@unique([userId, listingId])
   @@map("favorites")
+}
+
+model Transaction {
+  id        String            @id @default(uuid())
+  listingId String
+  buyerId   String
+  sellerId  String
+  status    TransactionStatus @default(PENDING)
+
+  buyerConfirmed  Boolean @default(false)
+  sellerConfirmed Boolean @default(false)
+
+  message   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  buyer   User    @relation("BuyerTransactions", fields: [buyerId], references: [id], onDelete: Cascade)
+  seller  User    @relation("SellerTransactions", fields: [sellerId], references: [id], onDelete: Cascade)
+
+  @@index([listingId])
+  @@index([buyerId])
+  @@index([sellerId])
+  @@index([status])
 }
