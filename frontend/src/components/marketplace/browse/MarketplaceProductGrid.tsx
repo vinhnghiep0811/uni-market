@@ -1,6 +1,9 @@
 import { Heart, SearchX } from "lucide-react";
 import Link from "next/link";
 
+import Badge from "@/components/ui/Badge";
+import Button from "@/components/ui/Button";
+
 import CategoryBadge from "./products/CategoryBadge";
 import ProductImage from "./products/ProductImage";
 import ProductInfo from "./products/ProductInfo";
@@ -10,20 +13,78 @@ type MarketplaceProductGridProps = {
   products: MarketplaceProduct[];
   categoriesById: Record<string, MarketplaceCategory>;
   favoritePendingIds: string[];
+  purchasePendingIds: string[];
   onToggleFavorite: (listingId: string) => Promise<void>;
+  onPurchase: (listingId: string) => Promise<void>;
 };
+
+function getPurchasePresentation(product: MarketplaceProduct) {
+  if (product.isOwnedByCurrentUser) {
+    return {
+      buttonLabel: "Your listing",
+      helperText: "You cannot create an order for your own listing.",
+      disabled: true,
+      badge: "Your listing",
+      badgeClassName: "bg-slate-100 text-slate-700",
+    };
+  }
+
+  if (product.transactionStatus === "PENDING") {
+    return {
+      buttonLabel: "Request sent",
+      helperText: "You already created a purchase request for this item.",
+      disabled: true,
+      badge: "Pending request",
+      badgeClassName: "bg-blue-100 text-blue-700",
+    };
+  }
+
+  if (product.transactionStatus === "ACCEPTED") {
+    return {
+      buttonLabel: "In progress",
+      helperText: "The seller accepted your request. Continue in your profile.",
+      disabled: true,
+      badge: "Your order accepted",
+      badgeClassName: "bg-amber-100 text-amber-800",
+    };
+  }
+
+  if (product.status === "IN_TRANSACTION") {
+    return {
+      buttonLabel: "Unavailable",
+      helperText: "This item is currently being handled in another transaction.",
+      disabled: true,
+      badge: "In transaction",
+      badgeClassName: "bg-amber-100 text-amber-800",
+    };
+  }
+
+  return {
+    buttonLabel: "Dat mua",
+    helperText: "Create an order and wait for the seller to respond.",
+    disabled: false,
+    badge: "Available",
+    badgeClassName: "bg-emerald-100 text-emerald-700",
+  };
+}
 
 function MarketplaceProductCard({
   product,
   category,
   isFavoritePending,
+  isPurchasePending,
   onToggleFavorite,
+  onPurchase,
 }: {
   product: MarketplaceProduct;
   category: MarketplaceCategory;
   isFavoritePending: boolean;
+  isPurchasePending: boolean;
   onToggleFavorite: (listingId: string) => Promise<void>;
+  onPurchase: (listingId: string) => Promise<void>;
 }) {
+  const purchasePresentation = getPurchasePresentation(product);
+
   return (
     <article className="group flex h-full flex-col rounded-[28px] bg-white p-4 shadow-sm ring-1 ring-slate-200 transition duration-300 hover:-translate-y-1.5 hover:shadow-xl hover:shadow-slate-200/70">
       <div className="relative">
@@ -62,6 +123,15 @@ function MarketplaceProductCard({
       </div>
 
       <div className="mt-4 flex flex-1 flex-col gap-4">
+        <div className="flex items-center justify-between gap-3">
+          <Badge className={purchasePresentation.badgeClassName}>
+            {purchasePresentation.badge}
+          </Badge>
+          <p className="text-xs font-medium text-slate-400">
+            {product.listedAtLabel}
+          </p>
+        </div>
+
         <Link
           href={`/listings/${product.id}`}
           className="block rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
@@ -72,6 +142,30 @@ function MarketplaceProductCard({
             description={product.description}
           />
         </Link>
+
+        <div className="rounded-[22px] bg-slate-50 p-4 ring-1 ring-slate-200/80">
+          <p className="text-sm font-medium text-slate-900">
+            {purchasePresentation.helperText}
+          </p>
+          <div className="mt-3 flex items-center gap-3">
+            <Button
+              size="sm"
+              className="flex-1"
+              disabled={purchasePresentation.disabled || isPurchasePending}
+              onClick={() => {
+                void onPurchase(product.id);
+              }}
+            >
+              {isPurchasePending ? "Sending..." : purchasePresentation.buttonLabel}
+            </Button>
+            <Link
+              href={`/listings/${product.id}`}
+              className="shrink-0 text-sm font-semibold text-blue-700 transition hover:text-blue-800"
+            >
+              View details
+            </Link>
+          </div>
+        </div>
 
         <div className="mt-auto flex items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
@@ -85,16 +179,9 @@ function MarketplaceProductCard({
               <p className="truncate text-sm font-medium text-slate-900">
                 {product.seller.name}
               </p>
-              <p className="text-xs text-slate-500">{product.listedAtLabel}</p>
+              <p className="text-xs text-slate-500">{product.categoryName}</p>
             </div>
           </div>
-
-          <Link
-            href={`/listings/${product.id}`}
-            className="shrink-0 text-sm font-semibold text-blue-700 transition hover:text-blue-800"
-          >
-            View details
-          </Link>
         </div>
       </div>
     </article>
@@ -105,7 +192,9 @@ export default function MarketplaceProductGrid({
   products,
   categoriesById,
   favoritePendingIds,
+  purchasePendingIds,
   onToggleFavorite,
+  onPurchase,
 }: MarketplaceProductGridProps) {
   if (products.length === 0) {
     return (
@@ -138,7 +227,9 @@ export default function MarketplaceProductGrid({
             product={product}
             category={category}
             isFavoritePending={favoritePendingIds.includes(product.id)}
+            isPurchasePending={purchasePendingIds.includes(product.id)}
             onToggleFavorite={onToggleFavorite}
+            onPurchase={onPurchase}
           />
         );
       })}

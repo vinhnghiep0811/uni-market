@@ -14,6 +14,7 @@ import {
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import { cn } from "@/components/ui/cn";
+import { IMAGE_UPLOAD_ACCEPT } from "@/lib/uploads";
 
 import { MAX_IMAGES } from "../constants";
 import type { ListingImage } from "../types";
@@ -131,7 +132,7 @@ export default function ImageUploadPanel({
         <input
           ref={inputRef}
           type="file"
-          accept="image/*"
+          accept={IMAGE_UPLOAD_ACCEPT}
           multiple
           className="hidden"
           onChange={(event) => {

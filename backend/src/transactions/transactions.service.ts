@@ -155,6 +155,8 @@ export class TransactionsService {
                         fullName: true,
                         avatarUrl: true,
                         email: true,
+                        phoneNumber: true,
+                        facebookLink: true,
                     },
                 },
             },

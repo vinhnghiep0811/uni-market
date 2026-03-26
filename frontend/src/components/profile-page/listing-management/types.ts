@@ -1,15 +1,9 @@
-﻿import type {
+import type {
   ListingConditionValue,
   ListingFormValues,
 } from "@/components/marketplace/create-listing/types";
 import type { ProfileListing } from "@/features/profile/types";
-
-export type ManagedProfileListingApiStatus =
-  | "DRAFT"
-  | "PUBLISHED"
-  | "RESERVED"
-  | "SOLD"
-  | "HIDDEN";
+import type { ListingStatus } from "@/lib/transactions";
 
 export type ManagedProfileListingApi = {
   id: string;
@@ -17,7 +11,7 @@ export type ManagedProfileListingApi = {
   description: string;
   price: number | string;
   condition: ListingConditionValue;
-  status: ManagedProfileListingApiStatus;
+  status: ListingStatus;
   location: string | null;
   contactNote: string | null;
   categoryId: string;
@@ -37,6 +31,7 @@ export type ManagedProfileListingApi = {
 
 export type ManagedProfileListing = ProfileListing & {
   categoryId: string;
+  backendStatus: ListingStatus;
   condition: ListingConditionValue;
   location: string;
   contactNote: string;

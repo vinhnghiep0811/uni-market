@@ -14,6 +14,7 @@ export default function GoogleLoginButton() {
             onSuccess={async (credentialResponse) => {
                 try {
                     const idToken = credentialResponse.credential!;
+                    console.log(idToken);
                     const res = await loginWithGoogle(idToken);
                     
                     await refreshUser(); // 🔥 cập nhật user global

@@ -15,6 +15,7 @@ import type {
   MarketplaceProduct,
   SortOption,
 } from "./types";
+import type { TransactionStatus } from "@/lib/transactions";
 
 export const MARKETPLACE_FALLBACK_IMAGE = "/images/download.jpg";
 export const MARKETPLACE_MAX_PRICE = 10_000_000;
@@ -36,7 +37,16 @@ export const CONDITION_OPTIONS: MarketplaceCondition[] = [
 
 const CATEGORY_THEMES = [
   {
-    matches: ["textbook", "book", "study", "note", "course", "material"],
+    matches: [
+      "textbook",
+      "textbooks",
+      "book",
+      "study",
+      "study-materials",
+      "note",
+      "course",
+      "material",
+    ],
     icon: BookOpen,
     iconColorClassName: "bg-blue-100 text-blue-700",
     badgeClassName: "bg-blue-100 text-blue-700",
@@ -45,7 +55,15 @@ const CATEGORY_THEMES = [
       "bg-gradient-to-t from-blue-950/55 via-blue-950/10 to-transparent",
   },
   {
-    matches: ["electronic", "laptop", "phone", "tech", "device", "gadget"],
+    matches: [
+      "electronic",
+      "electronics",
+      "laptop",
+      "phone",
+      "tech",
+      "device",
+      "gadget",
+    ],
     icon: Laptop,
     iconColorClassName: "bg-violet-100 text-violet-700",
     badgeClassName: "bg-violet-100 text-violet-700",
@@ -54,7 +72,14 @@ const CATEGORY_THEMES = [
       "bg-gradient-to-t from-violet-950/60 via-violet-950/15 to-transparent",
   },
   {
-    matches: ["home", "appliance", "kitchen", "cook", "household"],
+    matches: [
+      "home",
+      "appliance",
+      "home-appliances",
+      "kitchen",
+      "cook",
+      "household",
+    ],
     icon: Home,
     iconColorClassName: "bg-amber-100 text-amber-700",
     badgeClassName: "bg-amber-100 text-amber-700",
@@ -63,7 +88,15 @@ const CATEGORY_THEMES = [
       "bg-gradient-to-t from-amber-950/55 via-amber-950/10 to-transparent",
   },
   {
-    matches: ["dorm", "room", "bedding", "storage", "essential", "furniture"],
+    matches: [
+      "dorm",
+      "dorm-essentials",
+      "room",
+      "bedding",
+      "storage",
+      "essential",
+      "furniture",
+    ],
     icon: BedDouble,
     iconColorClassName: "bg-emerald-100 text-emerald-700",
     badgeClassName: "bg-emerald-100 text-emerald-700",
@@ -110,6 +143,14 @@ function getSellerInitials(name: string) {
 function normalizePrice(value: number | string) {
   const numericValue = Number(value);
   return Number.isFinite(numericValue) ? numericValue : 0;
+}
+
+function resolveListingCoverImage(listing: MarketplaceListingApi) {
+  const [coverImage] = [...listing.images].sort(
+    (left, right) => left.sortOrder - right.sortOrder,
+  );
+
+  return coverImage?.imageUrl || MARKETPLACE_FALLBACK_IMAGE;
 }
 
 function formatRelativeTime(value: string) {
@@ -200,6 +241,10 @@ export function buildMarketplaceCategoriesById(
 
 export function mapListingToMarketplaceProduct(
   listing: MarketplaceListingApi,
+  options?: {
+    currentUserId?: string;
+    transactionStatus?: TransactionStatus | null;
+  },
 ): MarketplaceProduct {
   const theme = resolveCategoryTheme(listing.category);
   const sellerName = listing.seller.fullName?.trim() || "Campus seller";
@@ -213,16 +258,20 @@ export function mapListingToMarketplaceProduct(
     categoryId: listing.categoryId,
     categoryName: listing.category.name,
     condition: mapListingCondition(listing.condition),
-    imageSrc: MARKETPLACE_FALLBACK_IMAGE,
+    imageSrc: resolveListingCoverImage(listing),
     imageAlt: listing.title,
     imagePosition: "center",
     imageOverlayClassName: theme.imageOverlayClassName,
     seller: {
+      id: listing.seller.id,
       name: sellerName,
       initials: getSellerInitials(sellerName),
       avatarClassName: theme.sellerAvatarClassName,
     },
     listedAtLabel: formatRelativeTime(listing.createdAt),
     createdAt: listing.createdAt,
+    status: listing.status,
+    transactionStatus: options?.transactionStatus ?? null,
+    isOwnedByCurrentUser: listing.seller.id === options?.currentUserId,
   };
 }

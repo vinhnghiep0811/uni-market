@@ -1,9 +1,9 @@
 import type {
   ListingDetailApi,
   ListingDetailCondition,
-  ListingDetailStatus,
   ListingDetailViewModel,
 } from "./types";
+import type { ListingStatus } from "@/lib/transactions";
 
 export const LISTING_FALLBACK_IMAGE = "/images/download.jpg";
 
@@ -75,7 +75,7 @@ function formatConditionLabel(condition: ListingDetailCondition) {
   }
 }
 
-function getStatusPresentation(status: ListingDetailStatus) {
+function getStatusPresentation(status: ListingStatus) {
   switch (status) {
     case "PUBLISHED":
       return {
@@ -83,10 +83,10 @@ function getStatusPresentation(status: ListingDetailStatus) {
         availabilityLabel: "Available",
         statusBadgeClassName: "bg-emerald-500/90 text-white shadow-lg shadow-emerald-950/20",
       };
-    case "RESERVED":
+    case "IN_TRANSACTION":
       return {
-        statusLabel: "Reserved",
-        availabilityLabel: "Reserved",
+        statusLabel: "In Transaction",
+        availabilityLabel: "In Transaction",
         statusBadgeClassName: "bg-amber-400/95 text-amber-950 shadow-lg shadow-amber-950/10",
       };
     case "SOLD":

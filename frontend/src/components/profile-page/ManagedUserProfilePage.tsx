@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import type { FormEvent } from "react";
 import { useEffect, useState } from "react";
@@ -16,20 +16,24 @@ import {
   validateListingForm,
 } from "@/components/marketplace/create-listing/utils";
 import Card from "@/components/ui/Card";
+import { cn } from "@/components/ui/cn";
 import { useAuth } from "@/context/AuthContext";
 import ListingList from "@/features/profile/ListingList";
 import ProfileHeader from "@/features/profile/ProfileHeader";
 import ProfileSidebar from "@/features/profile/ProfileSidebar";
-import ProfileTabs from "@/features/profile/ProfileTabs";
 import type {
   ProfileContactState,
   ProfileFormErrors,
-  ProfileTab,
   ProfileUserViewModel,
 } from "@/features/profile/types";
 import { validateProfileForm } from "@/features/profile/utils";
 import { updateProfile } from "@/lib/auth";
 import { apiRequest } from "@/lib/api";
+import type {
+  TransactionApi,
+  TransactionListResponse,
+  TransactionMutationResponse,
+} from "@/lib/transactions";
 import type { AuthUser } from "@/types/auth";
 
 import ListingEditorModal from "./listing-management/ListingEditorModal";
@@ -42,6 +46,16 @@ import type {
   ManagedProfileListing,
   ManagedProfileListingApi,
 } from "./listing-management/types";
+import TransactionsPanel from "./transaction-management/TransactionsPanel";
+
+type ListingTab = "my-listings" | "archived-sold";
+type DashboardTab = ListingTab | "orders";
+
+const dashboardTabs: Array<{ id: DashboardTab; label: string }> = [
+  { id: "my-listings", label: "My Listings" },
+  { id: "archived-sold", label: "Archived & Sold" },
+  { id: "orders", label: "Orders" },
+];
 
 function buildInitialContactState(user: AuthUser) {
   return {
@@ -52,15 +66,57 @@ function buildInitialContactState(user: AuthUser) {
   };
 }
 
+function isListingTab(tab: DashboardTab): tab is ListingTab {
+  return tab !== "orders";
+}
+
 function filterListingsByTab(
   listings: ManagedProfileListing[],
-  activeTab: ProfileTab,
+  activeTab: ListingTab,
 ) {
   if (activeTab === "my-listings") {
-    return listings.filter((listing) => listing.status === "ACTIVE");
+    return listings.filter(
+      (listing) =>
+        listing.status === "ACTIVE" &&
+        listing.backendStatus !== "IN_TRANSACTION",
+    );
   }
 
   return listings.filter((listing) => listing.status !== "ACTIVE");
+}
+
+function DashboardTabs({
+  activeTab,
+  onChangeTab,
+}: {
+  activeTab: DashboardTab;
+  onChangeTab: (tab: DashboardTab) => void;
+}) {
+  return (
+    <Card className="p-2">
+      <div className="flex flex-wrap gap-2">
+        {dashboardTabs.map((tab) => {
+          const isActive = tab.id === activeTab;
+
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => onChangeTab(tab.id)}
+              className={cn(
+                "rounded-full px-4 py-2 text-sm font-medium transition duration-200",
+                isActive
+                  ? "bg-slate-900 text-white shadow-sm"
+                  : "text-slate-500 hover:bg-slate-100 hover:text-slate-900",
+              )}
+            >
+              {tab.label}
+            </button>
+          );
+        })}
+      </div>
+    </Card>
+  );
 }
 
 export default function ManagedUserProfilePage() {
@@ -97,7 +153,7 @@ function AuthenticatedProfileContent({
   onUpdateCurrentUser,
   onNavigateToLogin,
 }: AuthenticatedProfileContentProps) {
-  const [activeTab, setActiveTab] = useState<ProfileTab>("my-listings");
+  const [activeTab, setActiveTab] = useState<DashboardTab>("my-listings");
   const [profileValues, setProfileValues] = useState<ProfileContactState>(
     buildInitialContactState(user),
   );
@@ -116,6 +172,25 @@ function AuthenticatedProfileContent({
   const [listingFeedbackTone, setListingFeedbackTone] = useState<
     "success" | "error"
   >("success");
+
+  const [buyerTransactions, setBuyerTransactions] = useState<TransactionApi[]>(
+    [],
+  );
+  const [sellerTransactions, setSellerTransactions] = useState<TransactionApi[]>(
+    [],
+  );
+  const [isLoadingTransactions, setIsLoadingTransactions] = useState(true);
+  const [transactionsLoadError, setTransactionsLoadError] = useState<string | null>(
+    null,
+  );
+  const [transactionFeedbackMessage, setTransactionFeedbackMessage] =
+    useState<string | null>(null);
+  const [transactionFeedbackTone, setTransactionFeedbackTone] = useState<
+    "success" | "error"
+  >("success");
+  const [transactionActionId, setTransactionActionId] = useState<string | null>(
+    null,
+  );
 
   const [categories, setCategories] = useState<ListingCategory[]>([]);
   const [isLoadingCategories, setIsLoadingCategories] = useState(true);
@@ -140,9 +215,16 @@ function AuthenticatedProfileContent({
 
     const loadInitialData = async () => {
       try {
-        const [listingsResponse, categoriesResponse] = await Promise.all([
+        const [
+          listingsResponse,
+          categoriesResponse,
+          buyerTransactionsResponse,
+          sellerTransactionsResponse,
+        ] = await Promise.all([
           apiRequest<ManagedProfileListingApi[]>("/listings/me"),
           apiRequest<ListingCategory[]>("/categories"),
+          apiRequest<TransactionListResponse>("/transactions/my-requests"),
+          apiRequest<TransactionListResponse>("/transactions/incoming"),
         ]);
 
         if (!isMounted) {
@@ -151,8 +233,11 @@ function AuthenticatedProfileContent({
 
         setListings(listingsResponse.map(mapManagedProfileListing));
         setCategories(categoriesResponse);
+        setBuyerTransactions(buyerTransactionsResponse.data);
+        setSellerTransactions(sellerTransactionsResponse.data);
         setListingsLoadError(null);
         setCategoryLoadError(null);
+        setTransactionsLoadError(null);
       } catch (error) {
         if (!isMounted) {
           return;
@@ -161,14 +246,16 @@ function AuthenticatedProfileContent({
         const message =
           error instanceof Error
             ? error.message
-            : "Could not load your listings right now.";
+            : "Could not load your dashboard right now.";
 
         setListingsLoadError(message);
         setCategoryLoadError(message);
+        setTransactionsLoadError(message);
       } finally {
         if (isMounted) {
           setIsLoadingListings(false);
           setIsLoadingCategories(false);
+          setIsLoadingTransactions(false);
         }
       }
     };
@@ -216,6 +303,41 @@ function AuthenticatedProfileContent({
     }
   };
 
+  const loadTransactions = async () => {
+    setIsLoadingTransactions(true);
+    setTransactionsLoadError(null);
+
+    try {
+      const [buyerResponse, sellerResponse] = await Promise.all([
+        apiRequest<TransactionListResponse>("/transactions/my-requests"),
+        apiRequest<TransactionListResponse>("/transactions/incoming"),
+      ]);
+
+      setBuyerTransactions(buyerResponse.data);
+      setSellerTransactions(sellerResponse.data);
+    } catch (error) {
+      setTransactionsLoadError(
+        error instanceof Error
+          ? error.message
+          : "Could not load your orders right now.",
+      );
+    } finally {
+      setIsLoadingTransactions(false);
+    }
+  };
+
+  const refreshListingsAndTransactions = async () => {
+    const [listingsResponse, buyerResponse, sellerResponse] = await Promise.all([
+      apiRequest<ManagedProfileListingApi[]>("/listings/me"),
+      apiRequest<TransactionListResponse>("/transactions/my-requests"),
+      apiRequest<TransactionListResponse>("/transactions/incoming"),
+    ]);
+
+    setListings(listingsResponse.map(mapManagedProfileListing));
+    setBuyerTransactions(buyerResponse.data);
+    setSellerTransactions(sellerResponse.data);
+  };
+
   const profileUser: ProfileUserViewModel = {
     id: user.id,
     fullName: user.fullName,
@@ -227,7 +349,9 @@ function AuthenticatedProfileContent({
     listings,
   };
 
-  const visibleListings = filterListingsByTab(listings, activeTab);
+  const visibleListings = isListingTab(activeTab)
+    ? filterListingsByTab(listings, activeTab)
+    : [];
 
   const handleFieldChange = (
     field: keyof ProfileContactState,
@@ -309,7 +433,11 @@ function AuthenticatedProfileContent({
     value: ListingFormValues[FieldName],
   ) => {
     setEditorValues((current) => ({ ...current, [field]: value }));
-    setEditorErrors((current) => ({ ...current, [field]: undefined, form: undefined }));
+    setEditorErrors((current) => ({
+      ...current,
+      [field]: undefined,
+      form: undefined,
+    }));
     setEditorFeedbackMessage(null);
     setEditorFeedbackTone("success");
   };
@@ -429,6 +557,36 @@ function AuthenticatedProfileContent({
     }
   };
 
+  const runTransactionAction = async (
+    transactionId: string,
+    endpoint: string,
+    successMessage: string,
+  ) => {
+    setTransactionActionId(transactionId);
+    setTransactionFeedbackMessage(null);
+
+    try {
+      await apiRequest<TransactionMutationResponse>(endpoint, {
+        method: "PATCH",
+      });
+
+      await refreshListingsAndTransactions();
+      setActiveTab("orders");
+      setTransactionFeedbackMessage(successMessage);
+      setTransactionFeedbackTone("success");
+      setTransactionsLoadError(null);
+    } catch (error) {
+      setTransactionFeedbackMessage(
+        error instanceof Error
+          ? error.message
+          : "Failed to update transaction.",
+      );
+      setTransactionFeedbackTone("error");
+    } finally {
+      setTransactionActionId(null);
+    }
+  };
+
   const handleLogout = async () => {
     setIsLoggingOut(true);
 
@@ -446,56 +604,144 @@ function AuthenticatedProfileContent({
         <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
           <div className="space-y-5">
             <ProfileHeader user={profileUser} />
-            <ProfileTabs activeTab={activeTab} onChangeTab={setActiveTab} />
+            <DashboardTabs activeTab={activeTab} onChangeTab={setActiveTab} />
 
-            {listingFeedbackMessage ? (
-              <Card
-                className={`p-4 text-sm ${
-                  listingFeedbackTone === "success"
-                    ? "border border-emerald-100 bg-emerald-50 text-emerald-700"
-                    : "border border-rose-100 bg-rose-50 text-rose-600"
-                }`}
-              >
-                {listingFeedbackMessage}
-              </Card>
-            ) : null}
+            {isListingTab(activeTab) ? (
+              <>
+                {listingFeedbackMessage ? (
+                  <Card
+                    className={`p-4 text-sm ${
+                      listingFeedbackTone === "success"
+                        ? "border border-emerald-100 bg-emerald-50 text-emerald-700"
+                        : "border border-rose-100 bg-rose-50 text-rose-600"
+                    }`}
+                  >
+                    {listingFeedbackMessage}
+                  </Card>
+                ) : null}
 
-            {isLoadingListings ? (
-              <Card className="p-8 text-center">
-                <h2 className="text-lg font-semibold text-slate-900">
-                  Loading your listings
-                </h2>
-                <p className="mt-2 text-sm text-slate-500">
-                  Pulling the latest items from Uni Market.
-                </p>
-              </Card>
-            ) : listingsLoadError ? (
-              <Card className="p-8 text-center">
-                <h2 className="text-lg font-semibold text-slate-900">
-                  Could not load your listings
-                </h2>
-                <p className="mt-2 text-sm text-slate-500">{listingsLoadError}</p>
-                <button
-                  type="button"
-                  onClick={() => {
-                    void loadListings();
-                  }}
-                  className="mt-4 inline-flex rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
-                >
-                  Try again
-                </button>
-              </Card>
+                {isLoadingListings ? (
+                  <Card className="p-8 text-center">
+                    <h2 className="text-lg font-semibold text-slate-900">
+                      Loading your listings
+                    </h2>
+                    <p className="mt-2 text-sm text-slate-500">
+                      Pulling the latest items from Uni Market.
+                    </p>
+                  </Card>
+                ) : listingsLoadError ? (
+                  <Card className="p-8 text-center">
+                    <h2 className="text-lg font-semibold text-slate-900">
+                      Could not load your listings
+                    </h2>
+                    <p className="mt-2 text-sm text-slate-500">{listingsLoadError}</p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        void loadListings();
+                      }}
+                      className="mt-4 inline-flex rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
+                    >
+                      Try again
+                    </button>
+                  </Card>
+                ) : (
+                  <ListingList
+                    listings={visibleListings}
+                    activeTab={activeTab}
+                    deletingListingId={deletingListingId}
+                    archivingListingId={archivingListingId}
+                    editingListingId={editingListingId}
+                    onEdit={openEditor}
+                    onMarkAsSold={handleMarkAsSold}
+                    onDelete={handleDeleteListing}
+                  />
+                )}
+              </>
             ) : (
-              <ListingList
-                listings={visibleListings}
-                activeTab={activeTab}
-                deletingListingId={deletingListingId}
-                archivingListingId={archivingListingId}
-                editingListingId={editingListingId}
-                onEdit={openEditor}
-                onMarkAsSold={handleMarkAsSold}
-                onDelete={handleDeleteListing}
-              />
+              <>
+                {transactionFeedbackMessage ? (
+                  <Card
+                    className={`p-4 text-sm ${
+                      transactionFeedbackTone === "success"
+                        ? "border border-emerald-100 bg-emerald-50 text-emerald-700"
+                        : "border border-rose-100 bg-rose-50 text-rose-600"
+                    }`}
+                  >
+                    {transactionFeedbackMessage}
+                  </Card>
+                ) : null}
+
+                {isLoadingTransactions ? (
+                  <Card className="p-8 text-center">
+                    <h2 className="text-lg font-semibold text-slate-900">
+                      Loading your orders
+                    </h2>
+                    <p className="mt-2 text-sm text-slate-500">
+                      Pulling buyer and seller transactions from Uni Market.
+                    </p>
+                  </Card>
+                ) : transactionsLoadError ? (
+                  <Card className="p-8 text-center">
+                    <h2 className="text-lg font-semibold text-slate-900">
+                      Could not load your orders
+                    </h2>
+                    <p className="mt-2 text-sm text-slate-500">
+                      {transactionsLoadError}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        void loadTransactions();
+                      }}
+                      className="mt-4 inline-flex rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
+                    >
+                      Try again
+                    </button>
+                  </Card>
+                ) : (
+                  <TransactionsPanel
+                    buyerTransactions={buyerTransactions}
+                    sellerTransactions={sellerTransactions}
+                    pendingTransactionId={transactionActionId}
+                    onAccept={(transactionId) => {
+                      void runTransactionAction(
+                        transactionId,
+                        `/transactions/${transactionId}/accept`,
+                        "Purchase request accepted. Contact details are now available.",
+                      );
+                    }}
+                    onReject={(transactionId) => {
+                      void runTransactionAction(
+                        transactionId,
+                        `/transactions/${transactionId}/reject`,
+                        "Purchase request rejected.",
+                      );
+                    }}
+                    onCancel={(transactionId) => {
+                      void runTransactionAction(
+                        transactionId,
+                        `/transactions/${transactionId}/cancel`,
+                        "Transaction cancelled. The listing is available again.",
+                      );
+                    }}
+                    onConfirmReceived={(transactionId) => {
+                      void runTransactionAction(
+                        transactionId,
+                        `/transactions/${transactionId}/confirm-received`,
+                        "Buyer confirmation saved.",
+                      );
+                    }}
+                    onConfirmSold={(transactionId) => {
+                      void runTransactionAction(
+                        transactionId,
+                        `/transactions/${transactionId}/confirm-sold`,
+                        "Seller confirmation saved.",
+                      );
+                    }}
+                  />
+                )}
+              </>
             )}
           </div>
 

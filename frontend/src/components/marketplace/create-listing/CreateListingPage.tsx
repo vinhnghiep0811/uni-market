@@ -3,6 +3,10 @@
 import { useEffect, useState } from "react";
 
 import { apiRequest } from "@/lib/api";
+import {
+  isSupportedImageFile,
+  uploadListingImages,
+} from "@/lib/uploads";
 
 import ActionButtons from "./components/ActionButtons";
 import {
@@ -78,8 +82,12 @@ export default function CreateListingPage() {
     setFeedbackMessage(null);
     setFeedbackTone("info");
 
+    const supportedFiles = files.filter((file) => isSupportedImageFile(file));
+    const unsupportedCount = files.length - supportedFiles.length;
+
     setImages((current) => {
       const remainingSlots = MAX_IMAGES - current.length;
+      const nextMessages: string[] = [];
 
       if (remainingSlots <= 0) {
         setErrors((existing) => ({
@@ -89,17 +97,25 @@ export default function CreateListingPage() {
         return current;
       }
 
-      const acceptedFiles = files.slice(0, remainingSlots);
+      if (unsupportedCount > 0) {
+        nextMessages.push("Only JPG, PNG, and WEBP images are supported.");
+      }
+
+      const acceptedFiles = supportedFiles.slice(0, remainingSlots);
       const nextImages = acceptedFiles.map((file) => ({
         id: crypto.randomUUID(),
         file,
         previewUrl: URL.createObjectURL(file),
       }));
 
-      if (acceptedFiles.length < files.length) {
+      if (acceptedFiles.length < supportedFiles.length) {
+        nextMessages.push(`Only the first ${MAX_IMAGES} images are kept.`);
+      }
+
+      if (nextMessages.length > 0) {
         setErrors((existing) => ({
           ...existing,
-          images: `Only the first ${MAX_IMAGES} images are kept.`,
+          images: nextMessages.join(" "),
         }));
       }
 
@@ -173,9 +189,13 @@ export default function CreateListingPage() {
     setFeedbackTone("info");
 
     try {
+      const imageUrls = await uploadListingImages(
+        images.map((image) => image.file),
+      );
+
       const createdListing = await apiRequest<CreatedListing>("/listings", {
         method: "POST",
-        body: buildCreateListingPayload(values),
+        body: buildCreateListingPayload(values, imageUrls),
       });
 
       if (action === "publish") {

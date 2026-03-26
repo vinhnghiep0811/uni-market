@@ -82,7 +82,10 @@ export function getSubmissionLabel(action: SubmissionAction) {
   return "Working...";
 }
 
-export function buildCreateListingPayload(values: ListingFormValues) {
+export function buildCreateListingPayload(
+  values: ListingFormValues,
+  imageUrls: string[] = [],
+) {
   const title = values.title.trim();
   const description = values.description.trim();
   const price = values.price.trim();
@@ -97,6 +100,7 @@ export function buildCreateListingPayload(values: ListingFormValues) {
     condition: values.condition,
     ...(location ? { location } : {}),
     ...(contactNote ? { contactNote } : {}),
+    ...(imageUrls.length > 0 ? { imageUrls } : {}),
   };
 }
 

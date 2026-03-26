@@ -10,6 +10,7 @@ import { CategoriesModule } from './categories/categories.module';
 import { ListingsModule } from './listings/listings.module';
 import { FavoritesModule } from './favorites/favorites.module';
 import { TransactionsModule } from './transactions/transactions.module';
+import { UploadsModule } from './uploads/uploads.module';
 
 @Module({
   imports: [ConfigModule.forRoot({isGlobal: true,}),
@@ -21,6 +22,7 @@ import { TransactionsModule } from './transactions/transactions.module';
             ListingsModule,
             FavoritesModule,
             TransactionsModule,
+            UploadsModule,
           ],
   controllers: [AppController],
   providers: [AppService],

@@ -41,25 +41,46 @@ function resolveCategoryFilter(name: string, slug: string): FavoriteCategoryFilt
   const haystack = `${name} ${slug}`.toLowerCase();
 
   if (
-    ["textbook", "book", "study", "note", "course", "material"].some((keyword) =>
-      haystack.includes(keyword),
-    )
+    [
+      "textbook",
+      "textbooks",
+      "book",
+      "study",
+      "study-materials",
+      "note",
+      "course",
+      "material",
+    ].some((keyword) => haystack.includes(keyword))
   ) {
     return "textbooks";
   }
 
   if (
-    ["electronic", "laptop", "phone", "tech", "device", "gadget"].some((keyword) =>
-      haystack.includes(keyword),
-    )
+    [
+      "electronic",
+      "electronics",
+      "laptop",
+      "phone",
+      "tech",
+      "device",
+      "gadget",
+    ].some((keyword) => haystack.includes(keyword))
   ) {
     return "electronics";
   }
 
   if (
-    ["furniture", "desk", "chair", "storage", "dorm", "room", "bedding"].some(
-      (keyword) => haystack.includes(keyword),
-    )
+    [
+      "furniture",
+      "desk",
+      "chair",
+      "storage",
+      "dorm",
+      "dorm-essentials",
+      "room",
+      "bedding",
+      "home-appliances",
+    ].some((keyword) => haystack.includes(keyword))
   ) {
     return "furniture";
   }

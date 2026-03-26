@@ -19,6 +19,10 @@ export function clearAccessToken() {
     accessToken = null;
 }
 
+function isFormDataBody(body: unknown): body is FormData {
+    return typeof FormData !== "undefined" && body instanceof FormData;
+}
+
 // 🔥 gọi refresh token
 async function refreshAccessToken(): Promise<string | null> {
     try {
@@ -44,17 +48,25 @@ export async function apiRequest<T>(
     retry = true, // 🔥 tránh loop vô hạn
 ): Promise<T> {
     const { method = "GET", body } = options;
+    const useFormData = isFormDataBody(body);
 
     const response = await fetch(`${API_URL}${endpoint}`, {
         method,
         credentials: "include",
         headers: {
-            "Content-Type": "application/json",
+            ...(!useFormData && body !== undefined
+                ? { "Content-Type": "application/json" }
+                : {}),
             ...(accessToken && {
                 Authorization: `Bearer ${accessToken}`,
             }),
         },
-        body: body !== undefined ? JSON.stringify(body) : undefined,
+        body:
+            body === undefined
+                ? undefined
+                : useFormData
+                    ? body
+                    : JSON.stringify(body),
     });
 
     // 🔥 nếu token hết hạn

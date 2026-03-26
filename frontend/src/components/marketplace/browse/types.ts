@@ -1,5 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 
+import type { ListingStatus, TransactionStatus } from "@/lib/transactions";
+
 export type MarketplaceCondition = "All" | "New" | "Like New" | "Used";
 
 export type SortOption =
@@ -17,6 +19,7 @@ export type MarketplaceCategory = {
 };
 
 export type MarketplaceSeller = {
+  id: string;
   name: string;
   initials: string;
   avatarClassName: string;
@@ -38,6 +41,9 @@ export type MarketplaceProduct = {
   seller: MarketplaceSeller;
   listedAtLabel: string;
   createdAt: string;
+  status: ListingStatus;
+  transactionStatus: TransactionStatus | null;
+  isOwnedByCurrentUser: boolean;
 };
 
 export type MarketplaceCategoryApi = {
@@ -61,6 +67,7 @@ export type MarketplaceListingApi = {
   price: number | string;
   isFavorited: boolean;
   condition: MarketplaceListingCondition;
+  status: ListingStatus;
   categoryId: string;
   createdAt: string;
   category: MarketplaceCategoryApi;

@@ -4,8 +4,8 @@ import type { ListingFormValues } from "@/components/marketplace/create-listing/
 import type {
   ManagedProfileListing,
   ManagedProfileListingApi,
-  ManagedProfileListingApiStatus,
 } from "./types";
+import type { ListingStatus } from "@/lib/transactions";
 
 const PROFILE_FALLBACK_IMAGE = "/images/download.jpg";
 
@@ -51,7 +51,7 @@ function formatRelativeTime(value: string) {
 }
 
 function mapBackendStatusToProfileStatus(
-  status: ManagedProfileListingApiStatus,
+  status: ListingStatus,
 ) {
   if (status === "SOLD") {
     return "SOLD" as const;
@@ -97,6 +97,7 @@ export function mapManagedProfileListing(
     imageSrc: PROFILE_FALLBACK_IMAGE,
     imageAlt: listing.title,
     categoryId: listing.categoryId,
+    backendStatus: listing.status,
     categoryLabel: listing.category.name,
     categoryClassName: visualCategory.badgeClassName,
     condition: listing.condition,

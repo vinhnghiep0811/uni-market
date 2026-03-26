@@ -2,7 +2,14 @@
 
 import { useEffect, useState } from "react";
 
+import { useAuth } from "@/context/AuthContext";
 import { apiRequest } from "@/lib/api";
+import {
+  isActiveTransactionStatus,
+  type TransactionStatus,
+  type TransactionListResponse,
+  type TransactionMutationResponse,
+} from "@/lib/transactions";
 
 import FilterSidebar from "./FilterSidebar";
 import MarketplaceHero from "./MarketplaceHero";
@@ -43,7 +50,18 @@ async function fetchMarketplaceListings() {
   return [firstPage, ...remainingPages].flatMap((response) => response.data);
 }
 
-function buildMarketplaceState(listings: MarketplaceListingApi[]) {
+async function fetchMyRequests() {
+  const response =
+    await apiRequest<TransactionListResponse>("/transactions/my-requests");
+
+  return response.data;
+}
+
+function buildMarketplaceState(
+  listings: MarketplaceListingApi[],
+  currentUserId?: string,
+  activeTransactionsByListingId?: Map<string, TransactionStatus>,
+) {
   const uniqueCategories = new Map<string, MarketplaceListingApi["category"]>();
 
   listings.forEach((listing) => {
@@ -53,16 +71,50 @@ function buildMarketplaceState(listings: MarketplaceListingApi[]) {
   const categoryList = Array.from(uniqueCategories.values());
 
   return {
-    products: listings.map(mapListingToMarketplaceProduct),
+    products: listings.map((listing) =>
+      mapListingToMarketplaceProduct(listing, {
+        currentUserId,
+        transactionStatus:
+          activeTransactionsByListingId?.get(listing.id) ?? null,
+      }),
+    ),
     categories: buildMarketplaceCategories(categoryList),
     categoriesById: buildMarketplaceCategoriesById(categoryList),
   };
 }
 
+function buildActiveTransactionsByListingId(
+  transactions: Awaited<ReturnType<typeof fetchMyRequests>>,
+): Map<string, TransactionStatus> {
+  const activeTransactions = transactions
+    .filter((transaction) => isActiveTransactionStatus(transaction.status))
+    .sort(
+      (left, right) =>
+        new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime(),
+    );
+
+  return new Map(
+    activeTransactions.map((transaction) => [
+      transaction.listingId,
+      transaction.status,
+    ]),
+  );
+}
+
 export default function MarketplaceListingPage() {
+  const { user } = useAuth();
+  const currentUserId = user?.id;
+
   const [searchQuery, setSearchQuery] = useState("");
   const [products, setProducts] = useState<MarketplaceProduct[]>([]);
   const [favoritePendingIds, setFavoritePendingIds] = useState<string[]>([]);
+  const [purchasePendingIds, setPurchasePendingIds] = useState<string[]>([]);
+  const [transactionFeedback, setTransactionFeedback] = useState<string | null>(
+    null,
+  );
+  const [transactionFeedbackTone, setTransactionFeedbackTone] = useState<
+    "success" | "error"
+  >("success");
   const [categories, setCategories] = useState<MarketplaceCategory[]>([]);
   const [categoriesById, setCategoriesById] = useState<
     Record<string, MarketplaceCategory>
@@ -81,8 +133,15 @@ export default function MarketplaceListingPage() {
     setLoadError(null);
 
     try {
-      const listings = await fetchMarketplaceListings();
-      const nextState = buildMarketplaceState(listings);
+      const [listings, myRequests] = await Promise.all([
+        fetchMarketplaceListings(),
+        currentUserId ? fetchMyRequests() : Promise.resolve([]),
+      ]);
+      const nextState = buildMarketplaceState(
+        listings,
+        currentUserId,
+        buildActiveTransactionsByListingId(myRequests),
+      );
 
       setProducts(nextState.products);
       setCategories(nextState.categories);
@@ -102,8 +161,55 @@ export default function MarketplaceListingPage() {
   };
 
   useEffect(() => {
-    void loadListings();
-  }, []);
+    let isMounted = true;
+
+    const loadInitialListings = async () => {
+      try {
+        const [listings, myRequests] = await Promise.all([
+          fetchMarketplaceListings(),
+          currentUserId ? fetchMyRequests() : Promise.resolve([]),
+        ]);
+        const nextState = buildMarketplaceState(
+          listings,
+          currentUserId,
+          buildActiveTransactionsByListingId(myRequests),
+        );
+
+        if (!isMounted) {
+          return;
+        }
+
+        setProducts(nextState.products);
+        setCategories(nextState.categories);
+        setCategoriesById(nextState.categoriesById);
+        setLoadError(null);
+      } catch (error) {
+        if (!isMounted) {
+          return;
+        }
+
+        setProducts([]);
+        setCategories([]);
+        setCategoriesById({});
+        setLoadError(
+          error instanceof Error
+            ? error.message
+            : "Could not load listings right now.",
+        );
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    setIsLoading(true);
+    void loadInitialListings();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [currentUserId]);
 
   const priceCeiling = products.reduce(
     (ceiling, product) => Math.max(ceiling, product.price),
@@ -224,6 +330,47 @@ export default function MarketplaceListingPage() {
     }
   };
 
+  const handlePurchase = async (listingId: string) => {
+    if (purchasePendingIds.includes(listingId)) {
+      return;
+    }
+
+    setTransactionFeedback(null);
+    setPurchasePendingIds((current) => [...current, listingId]);
+
+    try {
+      const response = await apiRequest<TransactionMutationResponse>(
+        "/transactions",
+        {
+          method: "POST",
+          body: { listingId },
+        },
+      );
+
+      setProducts((currentProducts) =>
+        currentProducts.map((product) =>
+          product.id === listingId
+            ? {
+                ...product,
+                transactionStatus: response.data?.status ?? "PENDING",
+              }
+            : product,
+        ),
+      );
+      setTransactionFeedback("Purchase request sent. Track it in your profile.");
+      setTransactionFeedbackTone("success");
+    } catch (error) {
+      setTransactionFeedback(
+        error instanceof Error ? error.message : "Could not create request.",
+      );
+      setTransactionFeedbackTone("error");
+    } finally {
+      setPurchasePendingIds((current) =>
+        current.filter((id) => id !== listingId),
+      );
+    }
+  };
+
   return (
     <div className="min-h-[calc(100vh-73px)] bg-[#f8fafc] pb-8">
       <MarketplaceHero
@@ -258,6 +405,18 @@ export default function MarketplaceListingPage() {
           />
 
           <div className="space-y-4">
+            {transactionFeedback ? (
+              <div
+                className={`rounded-3xl px-5 py-4 text-sm ${
+                  transactionFeedbackTone === "success"
+                    ? "border border-emerald-200 bg-emerald-50 text-emerald-700"
+                    : "border border-rose-200 bg-rose-50 text-rose-700"
+                }`}
+              >
+                {transactionFeedback}
+              </div>
+            ) : null}
+
             {loadError ? (
               <div className="rounded-3xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm text-rose-700">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -290,7 +449,9 @@ export default function MarketplaceListingPage() {
                 products={paginatedProducts}
                 categoriesById={categoriesById}
                 favoritePendingIds={favoritePendingIds}
+                purchasePendingIds={purchasePendingIds}
                 onToggleFavorite={handleToggleFavorite}
+                onPurchase={handlePurchase}
                 resultCount={filteredProducts.length}
                 sortOption={sortOption}
                 onChangeSort={(value) => {

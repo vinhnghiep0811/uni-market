@@ -1,16 +1,11 @@
+import type { ListingStatus } from "@/lib/transactions";
+
 export type ListingDetailCondition =
   | "NEW"
   | "LIKE_NEW"
   | "GOOD"
   | "FAIR"
   | "POOR";
-
-export type ListingDetailStatus =
-  | "DRAFT"
-  | "PUBLISHED"
-  | "RESERVED"
-  | "SOLD"
-  | "HIDDEN";
 
 export type ListingDetailApi = {
   id: string;
@@ -19,7 +14,7 @@ export type ListingDetailApi = {
   price: number | string;
   isFavorited: boolean;
   condition: ListingDetailCondition;
-  status: ListingDetailStatus;
+  status: ListingStatus;
   location: string | null;
   contactNote: string | null;
   categoryId: string;

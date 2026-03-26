@@ -72,7 +72,9 @@ export class ListingsService {
         const sortOrder = query.sortOrder ?? 'desc';
 
         const where: Prisma.ListingWhereInput = {
-            status: ListingStatus.PUBLISHED,
+            status: {
+                in: [ListingStatus.PUBLISHED, ListingStatus.IN_TRANSACTION],
+            },
         };
 
         if (query.categoryId) {
