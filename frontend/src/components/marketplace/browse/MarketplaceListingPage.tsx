@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
 
@@ -62,6 +62,7 @@ function buildMarketplaceState(listings: MarketplaceListingApi[]) {
 export default function MarketplaceListingPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [products, setProducts] = useState<MarketplaceProduct[]>([]);
+  const [favoritePendingIds, setFavoritePendingIds] = useState<string[]>([]);
   const [categories, setCategories] = useState<MarketplaceCategory[]>([]);
   const [categoriesById, setCategoriesById] = useState<
     Record<string, MarketplaceCategory>
@@ -172,6 +173,57 @@ export default function MarketplaceListingPage() {
     );
   };
 
+  const handleToggleFavorite = async (listingId: string) => {
+    if (favoritePendingIds.includes(listingId)) {
+      return;
+    }
+
+    let nextFavoriteState: boolean | null = null;
+
+    setProducts((currentProducts) =>
+      currentProducts.map((product) => {
+        if (product.id !== listingId) {
+          return product;
+        }
+
+        nextFavoriteState = !product.isFavorited;
+
+        return {
+          ...product,
+          isFavorited: nextFavoriteState,
+        };
+      }),
+    );
+
+    if (nextFavoriteState === null) {
+      return;
+    }
+
+    setFavoritePendingIds((current) => [...current, listingId]);
+
+    try {
+      await apiRequest(`/favorites/${listingId}`, {
+        method: nextFavoriteState ? "POST" : "DELETE",
+      });
+    } catch (error) {
+      setProducts((currentProducts) =>
+        currentProducts.map((product) =>
+          product.id === listingId
+            ? {
+                ...product,
+                isFavorited: !nextFavoriteState!,
+              }
+            : product,
+        ),
+      );
+      console.error("Could not update favorite status.", error);
+    } finally {
+      setFavoritePendingIds((current) =>
+        current.filter((id) => id !== listingId),
+      );
+    }
+  };
+
   return (
     <div className="min-h-[calc(100vh-73px)] bg-[#f8fafc] pb-8">
       <MarketplaceHero
@@ -237,6 +289,8 @@ export default function MarketplaceListingPage() {
               <MarketplaceBrowseSection
                 products={paginatedProducts}
                 categoriesById={categoriesById}
+                favoritePendingIds={favoritePendingIds}
+                onToggleFavorite={handleToggleFavorite}
                 resultCount={filteredProducts.length}
                 sortOption={sortOption}
                 onChangeSort={(value) => {
@@ -254,5 +308,3 @@ export default function MarketplaceListingPage() {
     </div>
   );
 }
-
-

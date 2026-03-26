@@ -209,6 +209,7 @@ export function mapListingToMarketplaceProduct(
     title: listing.title,
     description: listing.description,
     price: normalizePrice(listing.price),
+    isFavorited: listing.isFavorited,
     categoryId: listing.categoryId,
     categoryName: listing.category.name,
     condition: mapListingCondition(listing.condition),

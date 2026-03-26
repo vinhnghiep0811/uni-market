@@ -63,7 +63,7 @@ export class ListingsService {
         });
     }
 
-    async findAll(query: GetListingsQueryDto) {
+    async findAll(query: GetListingsQueryDto, currentUserId: string) {
         const page = query.page ?? 1;
         const limit = query.limit ?? 12;
         const skip = (page - 1) * limit;
@@ -120,13 +120,28 @@ export class ListingsService {
                     images: {
                         orderBy: { sortOrder: 'asc' },
                     },
+                    favorites: {
+                        where: { userId: currentUserId },
+                        select: { id: true },
+                    },
                 },
             }),
             this.prisma.listing.count({ where }),
         ]);
 
+        const data = items.map((item) => {
+            const { favorites, ...listingData } = item as typeof item & {
+                favorites?: { id: string }[];
+            };
+
+            return {
+                ...listingData,
+                isFavorited: Array.isArray(favorites) && favorites.length > 0,
+            };
+        });
+
         return {
-            data: items,
+            data,
             meta: {
                 page,
                 limit,
@@ -153,7 +168,7 @@ export class ListingsService {
         });
     }
 
-    async findOne(id: string) {
+    async findOne(id: string, currentUserId?: string) {
         const listing = await this.prisma.listing.findUnique({
             where: { id },
             include: {
@@ -170,6 +185,12 @@ export class ListingsService {
                 images: {
                     orderBy: { sortOrder: 'asc' },
                 },
+                favorites: currentUserId
+                    ? {
+                        where: { userId: currentUserId },
+                        select: { id: true },
+                    }
+                    : false,
             },
         });
 
@@ -177,7 +198,14 @@ export class ListingsService {
             throw new NotFoundException('Listing not found');
         }
 
-        return listing;
+        const { favorites, ...listingData } = listing as typeof listing & {
+            favorites?: { id: string }[];
+        };
+
+        return {
+            ...listingData,
+            isFavorited: Array.isArray(favorites) && favorites.length > 0,
+        };
     }
 
     async update(userId: string, id: string, dto: UpdateListingDto) {

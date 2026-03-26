@@ -1,4 +1,4 @@
-﻿export type ListingDetailCondition =
+export type ListingDetailCondition =
   | "NEW"
   | "LIKE_NEW"
   | "GOOD"
@@ -17,6 +17,7 @@ export type ListingDetailApi = {
   title: string;
   description: string;
   price: number | string;
+  isFavorited: boolean;
   condition: ListingDetailCondition;
   status: ListingDetailStatus;
   location: string | null;
@@ -53,6 +54,7 @@ export type ListingDetailViewModel = {
   title: string;
   description: string;
   price: number;
+  isFavorited: boolean;
   originalPrice: number | null;
   discountPercentage: number | null;
   conditionLabel: string;

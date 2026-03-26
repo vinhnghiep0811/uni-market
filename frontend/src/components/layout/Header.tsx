@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { Bell, Search, ShoppingCart } from "lucide-react";
+import { Bell, Heart, Search } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -13,6 +13,7 @@ import { useAuth } from "@/context/AuthContext";
 const navItems = [
   { href: "/", label: "Home" },
   { href: "/#marketplace-listings", label: "Marketplace" },
+  { href: "/favorites", label: "Saved Items" },
   { href: "/profile", label: "My Listings" },
 ];
 
@@ -35,6 +36,8 @@ export default function Header() {
                 ? pathname === "/"
                 : item.href === "/profile"
                   ? pathname === "/profile"
+                  : item.href === "/favorites"
+                    ? pathname === "/favorites"
                   : false;
 
             return (
@@ -77,9 +80,17 @@ export default function Header() {
             <Bell className="h-5 w-5 text-gray-600" />
           </button>
 
-          <button className="rounded-full p-2 transition hover:bg-gray-100">
-            <ShoppingCart className="h-5 w-5 text-gray-600" />
-          </button>
+          <Link
+            href="/favorites"
+            className="rounded-full p-2 transition hover:bg-gray-100"
+          >
+            <Heart
+              className={cn(
+                "h-5 w-5",
+                pathname === "/favorites" ? "fill-red-500 text-red-500" : "text-gray-600",
+              )}
+            />
+          </Link>
 
           <Link href="/sell" className="hidden lg:block">
             <Button className="rounded-2xl bg-blue-950 px-4 text-white hover:bg-blue-900">

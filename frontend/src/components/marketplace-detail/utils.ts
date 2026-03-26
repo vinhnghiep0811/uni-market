@@ -1,4 +1,4 @@
-﻿import type {
+import type {
   ListingDetailApi,
   ListingDetailCondition,
   ListingDetailStatus,
@@ -169,6 +169,7 @@ export function mapListingDetail(listing: ListingDetailApi): ListingDetailViewMo
     title: listing.title,
     description: listing.description,
     price,
+    isFavorited: listing.isFavorited,
     originalPrice: null,
     discountPercentage: null,
     conditionLabel: formatConditionLabel(listing.condition),

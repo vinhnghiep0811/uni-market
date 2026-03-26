@@ -1,4 +1,4 @@
-﻿import type {
+import type {
   MarketplaceCategory,
   MarketplaceProduct,
   SortOption,
@@ -10,6 +10,8 @@ import SectionHeader from "./products/SectionHeader";
 type MarketplaceBrowseSectionProps = {
   products: MarketplaceProduct[];
   categoriesById: Record<string, MarketplaceCategory>;
+  favoritePendingIds: string[];
+  onToggleFavorite: (listingId: string) => Promise<void>;
   resultCount: number;
   sortOption: SortOption;
   onChangeSort: (value: SortOption) => void;
@@ -21,6 +23,8 @@ type MarketplaceBrowseSectionProps = {
 export default function MarketplaceBrowseSection({
   products,
   categoriesById,
+  favoritePendingIds,
+  onToggleFavorite,
   resultCount,
   sortOption,
   onChangeSort,
@@ -38,6 +42,8 @@ export default function MarketplaceBrowseSection({
       <MarketplaceProductGrid
         products={products}
         categoriesById={categoriesById}
+        favoritePendingIds={favoritePendingIds}
+        onToggleFavorite={onToggleFavorite}
       />
       <Pagination
         currentPage={currentPage}

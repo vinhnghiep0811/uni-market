@@ -1,7 +1,6 @@
-﻿"use client";
+"use client";
 
-import { Clock3, FolderOpen, MapPin, PackageCheck, Sparkles } from "lucide-react";
-import Link from "next/link";
+import { Clock3, FolderOpen, Heart, MapPin, PackageCheck, Sparkles } from "lucide-react";
 import { useState } from "react";
 
 import Badge from "@/components/ui/Badge";
@@ -16,6 +15,8 @@ import {
 
 type ListingHighlightsProps = {
   listing: ListingDetailViewModel;
+  isFavoritePending: boolean;
+  onToggleFavorite: () => Promise<void>;
 };
 
 const metadataIcons = {
@@ -28,6 +29,8 @@ const metadataIcons = {
 
 export default function ListingHighlights({
   listing,
+  isFavoritePending,
+  onToggleFavorite,
 }: ListingHighlightsProps) {
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
 
@@ -48,7 +51,9 @@ export default function ListingHighlights({
       key: "location",
       label: "Location",
       value: listing.location ?? "Campus meetup preferred",
-      supporting: listing.location ? "Pickup arranged with seller" : "Seller will confirm a meetup spot",
+      supporting: listing.location
+        ? "Pickup arranged with seller"
+        : "Seller will confirm a meetup spot",
     },
     {
       key: "category",
@@ -68,25 +73,33 @@ export default function ListingHighlights({
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-center gap-2 text-sm text-slate-500">
-        <Link href="/" className="transition hover:text-slate-900">
-          Home
-        </Link>
-        <span>&gt;</span>
-        <Link href="/#marketplace-listings" className="transition hover:text-slate-900">
-          {listing.categoryName}
-        </Link>
-        <span>&gt;</span>
-        <span className="max-w-full truncate text-slate-400">{listing.title}</span>
-      </div>
-
       <Card className="p-6 sm:p-7">
         <div className="space-y-6">
-          <div className="space-y-3">
-            <Badge className="bg-blue-50 text-blue-700">Student marketplace listing</Badge>
-            <h1 className="line-clamp-2 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
-              {listing.title}
-            </h1>
+          <div className="flex items-start justify-between gap-4">
+            <div className="space-y-3">
+              <Badge className="bg-blue-50 text-blue-700">
+                Student marketplace listing
+              </Badge>
+              <h1 className="line-clamp-2 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
+                {listing.title}
+              </h1>
+            </div>
+
+            <button
+              type="button"
+              aria-label={listing.isFavorited ? "Remove from favorites" : "Add to favorites"}
+              aria-pressed={listing.isFavorited}
+              title={listing.isFavorited ? "Remove from favorites" : "Add to favorites"}
+              disabled={isFavoritePending}
+              onClick={() => {
+                void onToggleFavorite();
+              }}
+              className={`inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full shadow-lg backdrop-blur transition disabled:cursor-not-allowed disabled:opacity-70 ${listing.isFavorited ? "bg-white text-rose-500 ring-1 ring-rose-200/80 hover:bg-rose-50" : "bg-slate-950/55 text-white hover:bg-slate-950/70"}`}
+            >
+              <Heart
+                className={`h-5 w-5 transition ${listing.isFavorited ? "fill-current" : "fill-transparent"}`}
+              />
+            </button>
           </div>
 
           <div className="flex flex-wrap items-end gap-3 border-b border-slate-100 pb-6">

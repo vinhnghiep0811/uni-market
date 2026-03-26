@@ -22,8 +22,9 @@ export class ListingsController {
     constructor(private readonly listingsService: ListingsService) { }
 
     @Get()
-    async findAll(@Query() query: GetListingsQueryDto) {
-        return this.listingsService.findAll(query);
+    @UseGuards(JwtAuthGuard)
+    async findAll(@Query() query: GetListingsQueryDto, @CurrentUser() user: any,) {
+        return this.listingsService.findAll(query, user.id);
     }
 
     @Get('me')
@@ -33,8 +34,9 @@ export class ListingsController {
     }
 
     @Get(':id')
-    async findOne(@Param('id') id: string) {
-        return this.listingsService.findOne(id);
+    @UseGuards(JwtAuthGuard)
+    async findOne(@Param('id') id: string, @CurrentUser() user: any,) {
+        return this.listingsService.findOne(id, user.id);
     }
 
     @Post()

@@ -27,6 +27,7 @@ export type MarketplaceProduct = {
   title: string;
   description: string;
   price: number;
+  isFavorited: boolean;
   categoryId: string;
   categoryName: string;
   condition: Exclude<MarketplaceCondition, "All">;
@@ -58,6 +59,7 @@ export type MarketplaceListingApi = {
   title: string;
   description: string;
   price: number | string;
+  isFavorited: boolean;
   condition: MarketplaceListingCondition;
   categoryId: string;
   createdAt: string;

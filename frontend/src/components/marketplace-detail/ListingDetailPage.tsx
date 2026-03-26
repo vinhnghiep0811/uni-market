@@ -1,6 +1,6 @@
-﻿"use client";
+"use client";
 
-import { ArrowLeft, RefreshCcw } from "lucide-react";
+import { RefreshCcw } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -58,6 +58,7 @@ export default function ListingDetailPage({
 }: ListingDetailPageProps) {
   const [listing, setListing] = useState<ListingDetailViewModel | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isFavoritePending, setIsFavoritePending] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -100,17 +101,45 @@ export default function ListingDetailPage({
     };
   }, [listingId]);
 
+  const handleToggleFavorite = async () => {
+    if (!listing || isFavoritePending) {
+      return;
+    }
+
+    const nextFavoriteState = !listing.isFavorited;
+
+    setIsFavoritePending(true);
+    setListing((currentListing) =>
+      currentListing
+        ? {
+            ...currentListing,
+            isFavorited: nextFavoriteState,
+          }
+        : currentListing,
+    );
+
+    try {
+      await apiRequest(`/favorites/${listing.id}`, {
+        method: nextFavoriteState ? "POST" : "DELETE",
+      });
+    } catch (error) {
+      setListing((currentListing) =>
+        currentListing
+          ? {
+              ...currentListing,
+              isFavorited: !nextFavoriteState,
+            }
+          : currentListing,
+      );
+      console.error("Could not update favorite status.", error);
+    } finally {
+      setIsFavoritePending(false);
+    }
+  };
+
   return (
     <section className="min-h-[calc(100vh-73px)] bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.12),transparent_28%),linear-gradient(180deg,#f8fafc_0%,#ffffff_100%)] px-4 py-6 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl space-y-6">
-        <Link
-          href="/#marketplace-listings"
-          className="inline-flex items-center gap-2 text-sm font-medium text-slate-600 transition hover:text-slate-950"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to marketplace
-        </Link>
-
         {isLoading ? <ListingDetailLoadingState /> : null}
 
         {!isLoading && loadError ? (
@@ -140,17 +169,40 @@ export default function ListingDetailPage({
         ) : null}
 
         {!isLoading && listing ? (
-          <div className="grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
-            <ListingGallery
-              images={listing.images}
-              title={listing.title}
-              availabilityLabel={listing.availabilityLabel}
-              statusBadgeClassName={listing.statusBadgeClassName}
-            />
+          <div className="space-y-6">
+            <div className="flex flex-wrap items-center gap-2 text-sm text-slate-500">
+              <Link href="/" className="transition hover:text-slate-900">
+                Home
+              </Link>
+              <span>&gt;</span>
+              <Link
+                href="/#marketplace-listings"
+                className="transition hover:text-slate-900"
+              >
+                {listing.categoryName}
+              </Link>
+              <span>&gt;</span>
+              <span className="max-w-full truncate text-slate-400">
+                {listing.title}
+              </span>
+            </div>
 
-            <div className="space-y-5">
-              <ListingHighlights listing={listing} />
-              <ListingSellerPanel listing={listing} />
+            <div className="grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
+              <ListingGallery
+                images={listing.images}
+                title={listing.title}
+                availabilityLabel={listing.availabilityLabel}
+                statusBadgeClassName={listing.statusBadgeClassName}
+              />
+
+              <div className="space-y-5">
+                <ListingHighlights
+                  listing={listing}
+                  isFavoritePending={isFavoritePending}
+                  onToggleFavorite={handleToggleFavorite}
+                />
+                <ListingSellerPanel listing={listing} />
+              </div>
             </div>
           </div>
         ) : null}
