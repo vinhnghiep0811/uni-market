@@ -1,44 +1,44 @@
-# --- Stage 1: Base (Cài đặt dependencies chung) ---
-FROM node:20-alpine AS base
+# --- Stage 1: deps ---
+FROM node:20-alpine AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
+
 COPY package*.json ./
 RUN npm ci
 
-# --- Stage 2: Development (DÙNG CHO DOCKER-COMPOSE TARGET) ---
-# Stage này dành riêng cho việc code ở máy local
-FROM base AS development
+# --- Stage 2: builder ---
+FROM node:20-alpine AS builder
+RUN apk add --no-cache libc6-compat
 WORKDIR /app
-COPY . .
-# Next.js telemetry (tùy chọn)
-ENV NEXT_TELEMETRY_DISABLED 1
-EXPOSE 3000
-# Chạy lệnh dev để có hot-reload
-CMD ["npm", "run", "dev"]
 
-# --- Stage 3: Builder (Dùng để đóng gói cho Production) ---
-FROM base AS builder
-WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-ENV NEXT_TELEMETRY_DISABLED 1
+
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+
 RUN npm run build
 
-# --- Stage 4: Runner (Bản Production siêu nhẹ) ---
-FROM node:20-alpine AS runner
+# --- Stage 3: production ---
+FROM node:20-alpine AS production
+RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-ENV NODE_ENV production
-ENV NEXT_TELEMETRY_DISABLED 1
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV PORT=3000
 
+# user non-root (good practice)
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
+# copy standalone output
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 USER nextjs
+
 EXPOSE 3000
-ENV PORT 3000
 
 CMD ["node", "server.js"]

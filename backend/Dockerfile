@@ -1,34 +1,60 @@
-# --- Stage 1: Base (Các thiết lập chung) ---
-FROM node:20-alpine AS base
+# --- Stage 1: deps ---
+FROM node:20-alpine AS deps
 WORKDIR /app
+
+RUN apk add --no-cache openssl
+
 COPY package*.json ./
-RUN npm install
-COPY prisma ./prisma/
+RUN npm ci
+
+COPY prisma ./prisma
 RUN npx prisma generate
 
-# --- Stage 2: Development (Dùng để code, có hot-reload) ---
-FROM base AS development
+# --- Stage 2: development ---
+FROM node:20-alpine AS development
+WORKDIR /app
+
+RUN apk add --no-cache openssl
+
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/prisma ./prisma
+COPY --from=deps /app/generated ./generated
 COPY . .
+
 ENV NODE_ENV=development
-# Port cho debugger hoặc app
-EXPOSE 3001 5555 
+
+EXPOSE 3001 5555
 CMD ["npm", "run", "start:dev"]
 
-# --- Stage 3: Build (Chỉ dùng để compile code) ---
-FROM base AS build-step
-COPY . .
-RUN npm run build
-# Xóa bớt devDependencies cho nhẹ
-RUN npm prune --production
+# --- Stage 3: builder ---
+FROM node:20-alpine AS builder
+WORKDIR /app
 
-# --- Stage 4: Production (Image cuối cùng cực nhẹ) ---
+RUN apk add --no-cache openssl
+
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/prisma ./prisma
+COPY --from=deps /app/generated ./generated
+COPY . .
+
+ENV NODE_ENV=production
+
+RUN npm run build
+RUN npm prune --omit=dev
+
+# --- Stage 4: production ---
 FROM node:20-alpine AS production
 WORKDIR /app
+
+RUN apk add --no-cache openssl
+
 ENV NODE_ENV=production
-COPY --from=build-step /app/dist ./dist
-COPY --from=build-step /app/node_modules ./node_modules
-COPY --from=build-step /app/package*.json ./
-COPY --from=build-step /app/prisma ./prisma
+
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package*.json ./
+COPY --from=builder /app/prisma ./prisma
+COPY --from=deps /app/generated ./generated
 
 EXPOSE 3001
 CMD ["node", "dist/main.js"]
