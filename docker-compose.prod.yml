@@ -46,6 +46,8 @@ services:
       context: ./backend
       dockerfile: Dockerfile
       target: production
+      args:
+        DATABASE_URL: ${DATABASE_URL}
     container_name: uni_market_backend
     restart: unless-stopped
     depends_on:

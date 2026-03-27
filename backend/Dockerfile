@@ -9,6 +9,9 @@ RUN npm ci
 
 COPY prisma ./prisma
 COPY prisma.config.ts ./
+
+ARG DATABASE_URL
+ENV DATABASE_URL=$DATABASE_URL
 RUN npx prisma generate
 
 # --- Stage 2: development ---
