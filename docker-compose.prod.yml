@@ -59,6 +59,8 @@ services:
         condition: service_started
     env_file:
       - ./backend/.env.production
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
     ports:
       - "127.0.0.1:3001:3001"
     healthcheck:
