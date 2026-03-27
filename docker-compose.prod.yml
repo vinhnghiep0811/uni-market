@@ -67,7 +67,7 @@ services:
       timeout: 5s
       retries: 5
     command: >
-      sh -c "npx prisma migrate deploy && node dist/main.js"
+      sh -c "npx prisma migrate deploy && node dist/src/main.js"
 
   frontend:
     build:
