@@ -8,7 +8,6 @@ import {
   uploadListingImages,
 } from "@/lib/uploads";
 
-import ActionButtons from "./components/ActionButtons";
 import {
   INITIAL_FORM_VALUES,
   MAX_IMAGES,
@@ -16,6 +15,7 @@ import {
 import ImageUploadPanel from "./components/ImageUploadPanel";
 import ListingForm from "./components/ListingForm";
 import PageHeader from "./components/PageHeader";
+import SellerInfoCard from "./components/SellerInfoCard";
 import {
   buildCreateListingPayload,
   validateListingForm,
@@ -26,7 +26,6 @@ import type {
   ListingFormErrors,
   ListingFormValues,
   ListingImage,
-  SubmissionAction,
 } from "./types";
 
 type CreatedListing = {
@@ -41,7 +40,6 @@ export default function CreateListingPage() {
   const [categoryLoadError, setCategoryLoadError] = useState<string | null>(null);
   const [images, setImages] = useState<ListingImage[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [activeAction, setActiveAction] = useState<SubmissionAction>(null);
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
   const [feedbackTone, setFeedbackTone] = useState<FeedbackTone>("info");
 
@@ -167,7 +165,7 @@ export default function CreateListingPage() {
     setImages([]);
   };
 
-  const submitListing = async (action: Exclude<SubmissionAction, null>) => {
+  const submitListing = async () => {
     const nextErrors = validateListingForm(values, images.length);
 
     if (categoryLoadError || categories.length === 0) {
@@ -184,7 +182,6 @@ export default function CreateListingPage() {
     }
 
     setIsSubmitting(true);
-    setActiveAction(action);
     setFeedbackMessage(null);
     setFeedbackTone("info");
 
@@ -198,18 +195,14 @@ export default function CreateListingPage() {
         body: buildCreateListingPayload(values, imageUrls),
       });
 
-      if (action === "publish") {
-        await apiRequest(`/listings/${createdListing.id}/status`, {
-          method: "PATCH",
-          body: { status: "PUBLISHED" },
-        });
-      }
+      await apiRequest(`/listings/${createdListing.id}/status`, {
+        method: "PATCH",
+        body: { status: "PUBLISHED" },
+      });
 
       resetForm();
       setFeedbackMessage(
-        action === "publish"
-          ? "Listing published successfully. Buyers can now find it in Uni Market."
-          : "Draft saved successfully. It stays private until you publish it.",
+        "Listing published successfully. Buyers can now find it in Uni Market.",
       );
       setFeedbackTone("success");
     } catch (error) {
@@ -221,23 +214,25 @@ export default function CreateListingPage() {
       setFeedbackTone("error");
     } finally {
       setIsSubmitting(false);
-      setActiveAction(null);
     }
   };
 
   return (
-    <section className="min-h-[calc(100vh-73px)] bg-[radial-gradient(circle_at_top_left,rgba(30,64,175,0.08),transparent_28%),linear-gradient(180deg,#f8fafc_0%,#ffffff_100%)] px-4 py-8 sm:px-6 lg:px-8">
+    <section className="min-h-[calc(100vh-73px)] px-4 py-8 sm:px-6 lg:px-8 bg-[#f8fafc]">
       <div className="mx-auto max-w-7xl space-y-6">
         <PageHeader />
 
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,0.96fr)_minmax(0,1.04fr)]">
-          <ImageUploadPanel
-            images={images}
-            error={errors.images}
-            onAddImages={addImages}
-            onRemoveImage={removeImage}
-            onMoveImage={moveImage}
-          />
+        <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,0.96fr)_minmax(0,1.04fr)]">
+          <div className="space-y-6">
+            <ImageUploadPanel
+              images={images}
+              error={errors.images}
+              onAddImages={addImages}
+              onRemoveImage={removeImage}
+              onMoveImage={moveImage}
+            />
+            <SellerInfoCard />
+          </div>
 
           <ListingForm
             values={values}
@@ -245,28 +240,20 @@ export default function CreateListingPage() {
             categories={categories}
             isLoadingCategories={isLoadingCategories}
             categoryLoadError={categoryLoadError}
+            isSubmitting={isSubmitting}
+            isPublishDisabled={isLoadingCategories || categories.length === 0}
+            feedbackMessage={feedbackMessage}
+            feedbackTone={feedbackTone}
             onRetryCategories={() => {
               void loadCategories();
+            }}
+            onPublish={() => {
+              void submitListing();
             }}
             onFieldChange={updateField}
           />
         </div>
-
-        <ActionButtons
-          isSubmitting={isSubmitting}
-          activeAction={activeAction}
-          isDisabled={isLoadingCategories || categories.length === 0}
-          feedbackMessage={feedbackMessage}
-          feedbackTone={feedbackTone}
-          onSaveDraft={() => {
-            void submitListing("draft");
-          }}
-          onPublish={() => {
-            void submitListing("publish");
-          }}
-        />
       </div>
     </section>
   );
 }
-

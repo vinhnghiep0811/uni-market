@@ -1,4 +1,4 @@
-﻿import { AlertCircle, LoaderCircle } from "lucide-react";
+import { AlertCircle, LoaderCircle, SendHorizonal } from "lucide-react";
 
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
@@ -14,11 +14,12 @@ import LocationField from "./LocationField";
 import {
   DESCRIPTION_MAX_LENGTH,
   DESCRIPTION_MIN_LENGTH,
-  TITLE_MAX_LENGTH,
   TITLE_MIN_LENGTH,
+  TITLE_MAX_LENGTH,
 } from "../constants";
 import { formatPricePreview } from "../utils";
 import type {
+  FeedbackTone,
   ListingCategory,
   ListingFormErrors,
   ListingFormValues,
@@ -30,11 +31,22 @@ type ListingFormProps = {
   categories: ListingCategory[];
   isLoadingCategories: boolean;
   categoryLoadError: string | null;
+  isSubmitting?: boolean;
+  isPublishDisabled?: boolean;
+  feedbackMessage?: string | null;
+  feedbackTone?: FeedbackTone;
   onRetryCategories: () => void;
+  onPublish?: () => void;
   onFieldChange: <FieldName extends keyof ListingFormValues>(
     field: FieldName,
     value: ListingFormValues[FieldName],
   ) => void;
+};
+
+const feedbackToneClasses: Record<FeedbackTone, string> = {
+  success: "border-emerald-200 bg-emerald-50 text-emerald-900",
+  error: "border-rose-200 bg-rose-50 text-rose-700",
+  info: "border-slate-200 bg-slate-50 text-slate-600",
 };
 
 export default function ListingForm({
@@ -43,35 +55,18 @@ export default function ListingForm({
   categories,
   isLoadingCategories,
   categoryLoadError,
+  isSubmitting = false,
+  isPublishDisabled,
+  feedbackMessage = null,
+  feedbackTone = "info",
   onRetryCategories,
+  onPublish,
   onFieldChange,
 }: ListingFormProps) {
   return (
-    <Card className="overflow-hidden border border-slate-200 bg-white/95 shadow-[0_18px_45px_-32px_rgba(15,23,42,0.4)]">
-      <div className="border-b border-slate-200 px-6 py-6">
-        <div className="space-y-2">
-          <p className="text-sm font-medium text-blue-900">Listing details</p>
-          <h2 className="text-2xl font-semibold tracking-tight text-slate-950">
-            Share the essentials buyers need
-          </h2>
-          <p className="text-sm leading-6 text-slate-500">
-            Keep the title specific, the description honest, and the price easy to
-            understand for fellow students.
-          </p>
-        </div>
-      </div>
-
+    <Card className="overflow-hidden  border border-slate-200">
       <div className="space-y-8 p-6">
         <section className="space-y-5">
-          <div className="space-y-1">
-            <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">
-              Item basics
-            </h3>
-            <p className="text-sm text-slate-500">
-              Clear basics help buyers compare listings quickly.
-            </p>
-          </div>
-
           <div className="space-y-5">
             <FormField
               label="Title"
@@ -135,15 +130,6 @@ export default function ListingForm({
         </section>
 
         <section className="space-y-5">
-          <div className="space-y-1">
-            <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">
-              Price and category
-            </h3>
-            <p className="text-sm text-slate-500">
-              Match the right category and keep pricing simple for campus buyers.
-            </p>
-          </div>
-
           {categoryLoadError ? (
             <div className="flex flex-col gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-900 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-start gap-3">
@@ -161,42 +147,50 @@ export default function ListingForm({
             </div>
           ) : null}
 
-          <div className="grid gap-5 md:grid-cols-2">
-            <FormField
-              label="Price"
-              htmlFor="price"
-              required
-              error={errors.price}
-              errorId="price-error"
-              helperText={
-                formatPricePreview(values.price)
-                  ? `Approx. ${formatPricePreview(values.price)}`
-                  : "Enter the asking price as digits only."
-              }
-              helperId="price-helper"
-            >
-              <div className="relative">
-                <Input
-                  id="price"
-                  value={values.price}
-                  inputMode="numeric"
-                  placeholder="150000"
-                  aria-invalid={Boolean(errors.price)}
-                  aria-describedby={errors.price ? "price-error" : "price-helper"}
-                  className={cn(
-                    "pr-16 focus:border-blue-300 focus:ring-blue-50",
-                    errors.price &&
-                      "border-rose-300 bg-rose-50/60 focus:border-rose-300 focus:ring-rose-100",
-                  )}
-                  onChange={(event) =>
-                    onFieldChange("price", event.target.value.replace(/[^\d]/g, ""))
-                  }
-                />
-                <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-500">
-                  VND
-                </span>
-              </div>
-            </FormField>
+          <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.8fr)]">
+            <div className="space-y-5 min-w-0">
+              <FormField
+                label="Price"
+                htmlFor="price"
+                required
+                error={errors.price}
+                errorId="price-error"
+                helperText={
+                  formatPricePreview(values.price)
+                    ? `Approx. ${formatPricePreview(values.price)}`
+                    : "Enter the asking price as digits only."
+                }
+                helperId="price-helper"
+              >
+                <div className="relative">
+                  <Input
+                    id="price"
+                    value={values.price}
+                    inputMode="numeric"
+                    placeholder="150000"
+                    aria-invalid={Boolean(errors.price)}
+                    aria-describedby={errors.price ? "price-error" : "price-helper"}
+                    className={cn(
+                      "pr-16 focus:border-blue-300 focus:ring-blue-50",
+                      errors.price &&
+                        "border-rose-300 bg-rose-50/60 focus:border-rose-300 focus:ring-rose-100",
+                    )}
+                    onChange={(event) =>
+                      onFieldChange("price", event.target.value.replace(/[^\d]/g, ""))
+                    }
+                  />
+                  <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-500">
+                    VND
+                  </span>
+                </div>
+              </FormField>
+
+              <ConditionSelect
+                value={values.condition}
+                error={errors.condition}
+                onChange={(value) => onFieldChange("condition", value)}
+              />
+            </div>
 
             <CategorySelect
               value={values.categoryId}
@@ -205,14 +199,6 @@ export default function ListingForm({
               error={errors.categoryId}
               onChange={(value) => onFieldChange("categoryId", value)}
             />
-
-            <div className="md:col-span-2">
-              <ConditionSelect
-                value={values.condition}
-                error={errors.condition}
-                onChange={(value) => onFieldChange("condition", value)}
-              />
-            </div>
           </div>
 
           {isLoadingCategories ? (
@@ -224,15 +210,6 @@ export default function ListingForm({
         </section>
 
         <section className="space-y-5">
-          <div className="space-y-1">
-            <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">
-              Meetup details
-            </h3>
-            <p className="text-sm text-slate-500">
-              These details are optional but helpful for coordinating around campus.
-            </p>
-          </div>
-
           <div className="space-y-5">
             <LocationField
               value={values.location}
@@ -246,8 +223,36 @@ export default function ListingForm({
             />
           </div>
         </section>
+
+        {onPublish ? (
+          <section className="space-y-4 border-t border-slate-200 pt-6">
+            {feedbackMessage ? (
+              <div
+                className={`inline-flex min-h-10 items-center rounded-2xl border px-3 py-2 text-sm ${feedbackToneClasses[feedbackTone]}`}
+              >
+                {feedbackMessage}
+              </div>
+            ) : null}
+
+            <Button
+              type="button"
+              size="lg"
+              disabled={isSubmitting || isPublishDisabled}
+              className="w-full rounded-2xl bg-blue-950 px-5 text-white hover:bg-blue-900 disabled:bg-slate-300"
+              leadingIcon={
+                isSubmitting ? (
+                  <LoaderCircle className="h-4 w-4 animate-spin" />
+                ) : (
+                  <SendHorizonal className="h-4 w-4" />
+                )
+              }
+              onClick={onPublish}
+            >
+              Publish Listing
+            </Button>
+          </section>
+        ) : null}
       </div>
     </Card>
   );
 }
-

@@ -12,15 +12,20 @@ export default function ProductInfo({
   description,
 }: ProductInfoProps) {
   return (
-    <div className="space-y-3">
-      <div className="space-y-2">
-        <h3 className="min-h-14 line-clamp-2 text-lg font-semibold leading-7 text-slate-900">
+    <div className="space-y-2">
+      {/* Title + Price cùng 1 hàng */}
+      <div className="flex items-start justify-between gap-3">
+        <h3 className="line-clamp-2 text-lg font-semibold text-slate-900">
           {title}
         </h3>
-        <p className="text-xl font-bold text-slate-950">{formatVndPrice(price)}</p>
+
+        <p className="shrink-0 text-xl font-bold text-slate-950">
+          {formatVndPrice(price)}
+        </p>
       </div>
 
-      <p className="min-h-12 line-clamp-2 text-sm leading-6 text-slate-500">
+      {/* Description bên dưới */}
+      <p className="line-clamp-2 text-sm leading-6 text-slate-500">
         {description}
       </p>
     </div>

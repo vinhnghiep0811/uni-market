@@ -37,7 +37,7 @@ export default function MarketplaceBrowseSection({
   onPageChange,
 }: MarketplaceBrowseSectionProps) {
   return (
-    <section className="space-y-5">
+    <section className="space-y-0">
       <SectionHeader
         resultCount={resultCount}
         sortOption={sortOption}

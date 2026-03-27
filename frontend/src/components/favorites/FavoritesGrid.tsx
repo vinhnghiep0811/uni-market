@@ -13,7 +13,7 @@ export default function FavoritesGrid({
   onRemove,
 }: FavoritesGridProps) {
   return (
-    <div className="grid grid-cols-1 gap-5 md:grid-cols-2 2xl:grid-cols-3">
+    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3 px-8">
       {items.map((item) => (
         <FavoritesListingCard
           key={item.id}

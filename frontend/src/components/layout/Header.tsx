@@ -12,7 +12,7 @@ import { useAuth } from "@/context/AuthContext";
 
 const navItems = [
   { href: "/", label: "Home" },
-  { href: "/#marketplace-listings", label: "Marketplace" },
+  // { href: "/#marketplace-listings", label: "Marketplace" },
   { href: "/favorites", label: "Saved Items" },
   { href: "/profile", label: "My Listings" },
 ];
@@ -23,7 +23,7 @@ export default function Header() {
   const { user } = useAuth();
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-white shadow-sm">
+    <header className="sticky top-0 z-50 w-full border-b border-gray-100 bg-white shadow-sm">
       <div className="flex items-center justify-between gap-4 px-6 py-3">
         <Link href="/" className="text-xl font-bold tracking-tight text-slate-950">
           Uni Market
@@ -61,21 +61,6 @@ export default function Header() {
         </nav>
 
         <div className="flex items-center gap-3 lg:gap-4">
-          <div
-            className={`hidden items-center rounded-full bg-gray-100 px-3 py-2 transition-all duration-300 md:flex ${
-              isFocused ? "w-72" : "w-56"
-            }`}
-          >
-            <Search className="mr-2 h-4 w-4 text-gray-500" />
-            <input
-              type="text"
-              placeholder="Search items..."
-              className="w-full bg-transparent text-sm outline-none"
-              onFocus={() => setIsFocused(true)}
-              onBlur={() => setIsFocused(false)}
-            />
-          </div>
-
           <button className="rounded-full p-2 transition hover:bg-gray-100">
             <Bell className="h-5 w-5 text-gray-600" />
           </button>

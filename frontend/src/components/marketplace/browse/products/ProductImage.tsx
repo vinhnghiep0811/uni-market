@@ -17,7 +17,7 @@ export default function ProductImage({
   children,
 }: ProductImageProps) {
   return (
-    <div className="relative aspect-square overflow-hidden rounded-[24px]">
+    <div className="relative h-70 overflow-hidden rounded-t-[15px]">
       <Image
         src={src}
         alt={alt}

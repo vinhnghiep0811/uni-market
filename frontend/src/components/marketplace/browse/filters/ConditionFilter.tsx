@@ -12,12 +12,9 @@ export default function ConditionFilter({
   onChange,
 }: ConditionFilterProps) {
   return (
-    <section className="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+    <section className="rounded-3xl">
       <div className="mb-4">
         <h2 className="text-base font-semibold text-slate-900">Condition</h2>
-        <p className="mt-1 text-sm text-slate-500">
-          Compare new and pre-owned listings quickly.
-        </p>
       </div>
 
       <div className="flex flex-wrap gap-2">

@@ -27,18 +27,18 @@ export default function MarketplaceHero({
 
   return (
     <section className="px-6 pt-6">
-      <div className="grid w-full overflow-hidden rounded-[32px] border border-slate-200/10 bg-slate-900 shadow-[0_32px_80px_-36px_rgba(15,23,42,0.85)] lg:grid-cols-[1.05fr_0.95fr]">
-        <div className="relative flex items-center overflow-hidden bg-gradient-to-br from-[#081a45] via-[#0e2c73] to-[#111827] px-6 py-12 text-white sm:px-10 lg:px-14 lg:py-16">
+      <div className="grid w-full overflow-hidden rounded-[32px] border border-slate-200/10 lg:grid-cols-[2fr_1fr]">
+        <div className="relative flex items-center overflow-hidden bg-slate-800 px-6 py-12 text-white sm:px-10 lg:px-14 lg:py-16">
           <div className="absolute inset-0">
-            <div className="absolute left-8 top-10 h-36 w-36 rounded-full bg-cyan-300/12 blur-3xl" />
-            <div className="absolute bottom-8 right-10 h-40 w-40 rounded-full bg-blue-500/18 blur-3xl" />
-            <div className="absolute inset-y-0 right-0 w-24 bg-gradient-to-r from-transparent to-white/10" />
+            <div className="absolute left-8 top-10 h-36 w-36 rounded-full" />
+            <div className="absolute bottom-8 right-10 h-40 w-40 rounded-full" />
+            <div className="absolute inset-y-0 right-0 w-24" />
           </div>
 
           <div className="relative z-10 w-full max-w-2xl">
-            <span className="inline-flex rounded-full border border-white/15 bg-white/10 px-4 py-1.5 text-sm font-medium text-blue-100 backdrop-blur-md">
+            {/* <span className="inline-flex rounded-full border border-white/15 bg-white/10 px-4 py-1.5 text-sm font-medium text-blue-100 backdrop-blur-md">
               Trusted student-to-student marketplace
-            </span>
+            </span> */}
 
             <h1 className="mt-6 max-w-xl text-4xl font-bold leading-tight text-balance sm:text-5xl lg:text-6xl">
               Buy &amp; Sell within your{" "}
@@ -78,7 +78,7 @@ export default function MarketplaceHero({
           <div className="absolute inset-0 bg-[linear-gradient(115deg,rgba(8,26,69,0.18)_5%,rgba(8,26,69,0.74)_42%,rgba(15,23,42,0.06)_78%)] lg:bg-[linear-gradient(90deg,rgba(8,26,69,0.82)_0%,rgba(8,26,69,0.36)_20%,rgba(15,23,42,0.1)_52%,rgba(15,23,42,0.18)_100%)]" />
           <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-slate-950/60 via-slate-950/10 to-transparent" />
 
-          <div className="absolute bottom-6 left-6 right-6 rounded-[28px] border border-white/15 bg-white/12 p-5 text-white shadow-[0_20px_50px_-28px_rgba(15,23,42,0.9)] backdrop-blur-xl sm:max-w-sm lg:left-auto">
+          {/* <div className="absolute bottom-6 left-6 right-6 rounded-[28px] border border-white/15 bg-white/12 p-5 text-white shadow-[0_20px_50px_-28px_rgba(15,23,42,0.9)] backdrop-blur-xl sm:max-w-sm lg:left-auto">
             <p className="text-sm font-medium text-blue-100/78">
               Easy campus pickups
             </p>
@@ -86,7 +86,7 @@ export default function MarketplaceHero({
               From class notes to room upgrades, discover listings from people
               nearby.
             </p>
-          </div>
+          </div> */}
         </div>
       </div>
     </section>

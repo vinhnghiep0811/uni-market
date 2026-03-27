@@ -2,7 +2,7 @@ import type { LucideIcon } from "lucide-react";
 
 import type { ListingStatus, TransactionStatus } from "@/lib/transactions";
 
-export type MarketplaceCondition = "All" | "New" | "Like New" | "Used";
+export type MarketplaceCondition = "All" | "New" | "Like New" | "Good" | "Fair" | "Poor";
 
 export type SortOption =
   | "Newest"

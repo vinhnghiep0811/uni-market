@@ -14,7 +14,7 @@ export default function ProductCard({
   category,
 }: ProductCardProps) {
   return (
-    <article className="group flex h-full flex-col rounded-[28px] bg-white p-4 shadow-sm ring-1 ring-slate-200 transition duration-300 hover:-translate-y-1.5 hover:shadow-xl hover:shadow-slate-200/70">
+    <article className="group flex h-full flex-col rounded-[28px] bg-white p-5 transition duration-300 hover:-translate-y-1.5 hover:shadow-xl hover:shadow-slate-200/70">
       <ProductImage
         src={product.imageSrc}
         alt={product.imageAlt}

@@ -1,5 +1,3 @@
-﻿import { ChevronDown } from "lucide-react";
-
 import { cn } from "@/components/ui/cn";
 
 import FormField from "./FormField";
@@ -21,11 +19,16 @@ export default function CategorySelect({
   onChange,
 }: CategorySelectProps) {
   const selectedCategory = categories.find((category) => category.id === value);
+  const fieldId = selectedCategory?.id
+    ? `category-${selectedCategory.id}`
+    : categories[0]
+      ? `category-${categories[0].id}`
+      : "category-empty";
 
   return (
     <FormField
-      label="Category"
-      htmlFor="categoryId"
+      label="Categories"
+      htmlFor={fieldId}
       required
       error={error}
       errorId="categoryId-error"
@@ -35,31 +38,53 @@ export default function CategorySelect({
       }
       helperId="categoryId-helper"
     >
-      <div className="relative">
-        <select
-          id="categoryId"
-          value={value}
-          disabled={disabled}
-          aria-invalid={Boolean(error)}
-          aria-describedby={error ? "categoryId-error" : "categoryId-helper"}
-          className={cn(
-            "h-11 w-full appearance-none rounded-2xl border bg-white px-4 pr-11 text-sm text-slate-900 outline-none transition duration-200",
-            "border-slate-200 focus:border-blue-300 focus:ring-4 focus:ring-blue-50",
-            disabled && "cursor-not-allowed bg-slate-50 text-slate-400",
-            error && "border-rose-300 bg-rose-50/60 focus:border-rose-300 focus:ring-rose-100",
-          )}
-          onChange={(event) => onChange(event.target.value)}
-        >
-          <option value="">Select a category</option>
-          {categories.map((category) => (
-            <option key={category.id} value={category.id}>
-              {category.name}
-            </option>
-          ))}
-        </select>
-        <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+      <div
+        className={cn(
+          "space-y-2 min-w-0",
+          disabled && "opacity-70",
+          error && "border-rose-300 bg-rose-50/60",
+        )}
+      >
+        {categories.map((category) => {
+          const isSelected = value === category.id;
+
+          return (
+            <label
+              key={category.id}
+              htmlFor={`category-${category.id}`}
+              className={cn(
+                "flex cursor-pointer items-start gap-3 rounded-2xl py-3 transition duration-200",
+                isSelected
+                  ? "bg-white"
+                  : "hover:bg-white/80",
+                disabled && "cursor-not-allowed",
+              )}
+            >
+              <input
+                id={`category-${category.id}`}
+                type="radio"
+                name="categoryId"
+                value={category.id}
+                checked={isSelected}
+                disabled={disabled}
+                onChange={() => onChange(category.id)}
+                className="mt-0.5 h-4 w-4 border-slate-300 text-slate-900 focus:ring-slate-400"
+              />
+
+              <span className="min-w-0">
+                <span className="block text-sm font-medium text-slate-900">
+                  {category.name}
+                </span>
+                {/* {category.description ? (
+                  <span className="mt-1 block text-xs leading-5 text-slate-500">
+                    {category.description}
+                  </span>
+                ) : null} */}
+              </span>
+            </label>
+          );
+        })}
       </div>
     </FormField>
   );
 }
-

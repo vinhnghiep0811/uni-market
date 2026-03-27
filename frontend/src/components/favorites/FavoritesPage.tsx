@@ -191,7 +191,7 @@ export default function FavoritesPage() {
   };
 
   return (
-    <section className="min-h-[calc(100vh-73px)] bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.12),transparent_24%),linear-gradient(180deg,#f8fafc_0%,#ffffff_100%)] px-4 py-6 sm:px-6 lg:px-8">
+    <section className="min-h-[calc(100vh-73px)] px-4 py-8 sm:px-6 lg:px-8 bg-[#f8fafc]">
       <div className="mx-auto max-w-7xl space-y-6">
         <FavoritesHeader
           resultCount={items.length}
@@ -235,7 +235,7 @@ export default function FavoritesPage() {
             </aside>
 
             <div className="space-y-5">
-              <div className="flex items-center justify-between gap-3 rounded-[24px] bg-white/75 px-5 py-4 shadow-sm ring-1 ring-slate-200/80 backdrop-blur">
+              {/* <div className="flex items-center justify-between gap-3 rounded-[24px] bg-white/75 px-5 py-4 shadow-sm ring-1 ring-slate-200/80 backdrop-blur">
                 <div>
                   <p className="text-sm font-medium text-slate-500">
                     Saved listings
@@ -253,7 +253,7 @@ export default function FavoritesPage() {
                     Reset Filters
                   </button>
                 ) : null}
-              </div>
+              </div> */}
 
               {items.length === 0 ? (
                 <FavoritesEmptyState />

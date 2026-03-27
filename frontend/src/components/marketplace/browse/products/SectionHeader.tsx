@@ -15,10 +15,9 @@ export default function SectionHeader({
   onChangeSort,
 }: SectionHeaderProps) {
   return (
-    <div className="flex flex-col gap-4 rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-200 sm:flex-row sm:items-end sm:justify-between">
+    <div className="flex flex-col px-8 sm:flex-row sm:items-end sm:justify-between">
       <div>
-        <p className="text-sm font-medium text-slate-500">Marketplace</p>
-        <h1 className="mt-1 text-3xl font-semibold text-slate-900">
+        <h1 className="text-3xl font-semibold text-slate-900">
           Explore Items
         </h1>
         <p className="mt-2 text-sm text-slate-500 sm:text-base">

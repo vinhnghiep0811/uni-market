@@ -10,7 +10,6 @@
 import type {
   ListingFormErrors,
   ListingFormValues,
-  SubmissionAction,
 } from "./types";
 
 export function formatPricePreview(value: string) {
@@ -68,18 +67,6 @@ export function validateListingForm(
   }
 
   return errors;
-}
-
-export function getSubmissionLabel(action: SubmissionAction) {
-  if (action === "publish") {
-    return "Publishing listing...";
-  }
-
-  if (action === "draft") {
-    return "Saving draft...";
-  }
-
-  return "Working...";
 }
 
 export function buildCreateListingPayload(

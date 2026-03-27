@@ -11,7 +11,7 @@ export default function PriceRangeSlider({
   onChange,
 }: PriceRangeSliderProps) {
   return (
-    <section className="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+    <section className="rounded-3xl bg-white">
       <div className="flex items-start justify-between gap-4">
         <div>
           <h2 className="text-base font-semibold text-slate-900">Price Range</h2>

@@ -1,5 +1,6 @@
 "use client";
 
+import { CheckCircle2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { useAuth } from "@/context/AuthContext";
@@ -24,6 +25,7 @@ import {
 import MarketplaceBrowseSection from "./MarketplaceBrowseSection";
 import type {
   MarketplaceCategory,
+  MarketplaceCategoryApi,
   MarketplaceListingsResponse,
   MarketplaceListingApi,
   MarketplaceProduct,
@@ -50,6 +52,10 @@ async function fetchMarketplaceListings() {
   return [firstPage, ...remainingPages].flatMap((response) => response.data);
 }
 
+async function fetchMarketplaceCategories() {
+  return apiRequest<MarketplaceCategoryApi[]>("/categories");
+}
+
 async function fetchMyRequests() {
   const response =
     await apiRequest<TransactionListResponse>("/transactions/my-requests");
@@ -57,18 +63,24 @@ async function fetchMyRequests() {
   return response.data;
 }
 
-function buildMarketplaceState(
-  listings: MarketplaceListingApi[],
-  currentUserId?: string,
-  activeTransactionsByListingId?: Map<string, TransactionStatus>,
-) {
+function extractCategoriesFromListings(listings: MarketplaceListingApi[]) {
   const uniqueCategories = new Map<string, MarketplaceListingApi["category"]>();
 
   listings.forEach((listing) => {
     uniqueCategories.set(listing.category.id, listing.category);
   });
 
-  const categoryList = Array.from(uniqueCategories.values());
+  return Array.from(uniqueCategories.values());
+}
+
+function buildMarketplaceState(
+  listings: MarketplaceListingApi[],
+  categories: MarketplaceCategoryApi[],
+  currentUserId?: string,
+  activeTransactionsByListingId?: Map<string, TransactionStatus>,
+) {
+  const categoryList =
+    categories.length > 0 ? categories : extractCategoriesFromListings(listings);
 
   return {
     products: listings.map((listing) =>
@@ -101,6 +113,24 @@ function buildActiveTransactionsByListingId(
   );
 }
 
+function MarketplaceFavoriteToast({ message }: { message: string }) {
+  return (
+    <div className="pointer-events-none fixed right-4 top-24 z-50 sm:right-6">
+      <div className="flex max-w-sm items-start gap-3 rounded-2xl border border-emerald-100 bg-white px-4 py-3 shadow-xl shadow-emerald-100/60 ring-1 ring-slate-200">
+        <div className="mt-0.5 rounded-full bg-emerald-100 p-1 text-emerald-700">
+          <CheckCircle2 className="h-4 w-4" />
+        </div>
+        <div>
+          <p className="text-sm font-semibold text-slate-900">
+            Added to favorites
+          </p>
+          <p className="mt-1 text-sm text-slate-600">{message}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function MarketplaceListingPage() {
   const { user } = useAuth();
   const currentUserId = user?.id;
@@ -115,6 +145,10 @@ export default function MarketplaceListingPage() {
   const [transactionFeedbackTone, setTransactionFeedbackTone] = useState<
     "success" | "error"
   >("success");
+  const [favoriteToast, setFavoriteToast] = useState<{
+    id: number;
+    message: string;
+  } | null>(null);
   const [categories, setCategories] = useState<MarketplaceCategory[]>([]);
   const [categoriesById, setCategoriesById] = useState<
     Record<string, MarketplaceCategory>
@@ -133,12 +167,14 @@ export default function MarketplaceListingPage() {
     setLoadError(null);
 
     try {
-      const [listings, myRequests] = await Promise.all([
+      const [listings, categories, myRequests] = await Promise.all([
         fetchMarketplaceListings(),
+        fetchMarketplaceCategories().catch(() => []),
         currentUserId ? fetchMyRequests() : Promise.resolve([]),
       ]);
       const nextState = buildMarketplaceState(
         listings,
+        categories,
         currentUserId,
         buildActiveTransactionsByListingId(myRequests),
       );
@@ -165,12 +201,14 @@ export default function MarketplaceListingPage() {
 
     const loadInitialListings = async () => {
       try {
-        const [listings, myRequests] = await Promise.all([
+        const [listings, categories, myRequests] = await Promise.all([
           fetchMarketplaceListings(),
+          fetchMarketplaceCategories().catch(() => []),
           currentUserId ? fetchMyRequests() : Promise.resolve([]),
         ]);
         const nextState = buildMarketplaceState(
           listings,
+          categories,
           currentUserId,
           buildActiveTransactionsByListingId(myRequests),
         );
@@ -219,6 +257,20 @@ export default function MarketplaceListingPage() {
   useEffect(() => {
     setMaxPrice(priceCeiling);
   }, [priceCeiling]);
+
+  useEffect(() => {
+    if (!favoriteToast) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setFavoriteToast(null);
+    }, 2800);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [favoriteToast]);
 
   const filteredProducts = products
     .filter((product) => {
@@ -284,26 +336,24 @@ export default function MarketplaceListingPage() {
       return;
     }
 
-    let nextFavoriteState: boolean | null = null;
+    const targetProduct = products.find((product) => product.id === listingId);
 
-    setProducts((currentProducts) =>
-      currentProducts.map((product) => {
-        if (product.id !== listingId) {
-          return product;
-        }
-
-        nextFavoriteState = !product.isFavorited;
-
-        return {
-          ...product,
-          isFavorited: nextFavoriteState,
-        };
-      }),
-    );
-
-    if (nextFavoriteState === null) {
+    if (!targetProduct) {
       return;
     }
+
+    const nextFavoriteState = !targetProduct.isFavorited;
+
+    setProducts((currentProducts) =>
+      currentProducts.map((product) =>
+        product.id === listingId
+          ? {
+              ...product,
+              isFavorited: nextFavoriteState,
+            }
+          : product,
+      ),
+    );
 
     setFavoritePendingIds((current) => [...current, listingId]);
 
@@ -311,6 +361,13 @@ export default function MarketplaceListingPage() {
       await apiRequest(`/favorites/${listingId}`, {
         method: nextFavoriteState ? "POST" : "DELETE",
       });
+
+      if (nextFavoriteState) {
+        setFavoriteToast({
+          id: Date.now(),
+          message: `"${targetProduct.title}" was saved to your favorites.`,
+        });
+      }
     } catch (error) {
       setProducts((currentProducts) =>
         currentProducts.map((product) =>
@@ -373,6 +430,10 @@ export default function MarketplaceListingPage() {
 
   return (
     <div className="min-h-[calc(100vh-73px)] bg-[#f8fafc] pb-8">
+      {favoriteToast ? (
+        <MarketplaceFavoriteToast message={favoriteToast.message} />
+      ) : null}
+
       <MarketplaceHero
         searchQuery={searchQuery}
         onSearchChange={(value) => {

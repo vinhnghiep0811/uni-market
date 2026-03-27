@@ -86,7 +86,7 @@ function MarketplaceProductCard({
   const purchasePresentation = getPurchasePresentation(product);
 
   return (
-    <article className="group flex h-full flex-col rounded-[28px] bg-white p-4 shadow-sm ring-1 ring-slate-200 transition duration-300 hover:-translate-y-1.5 hover:shadow-xl hover:shadow-slate-200/70">
+    <article className="group flex h-full flex-col rounded-[15px] bg-white shadow-sm ring-1 ring-slate-200 transition duration-300 hover:-translate-y-1.5 hover:shadow-xl hover:shadow-slate-200/70">
       <div className="relative">
         <Link
           href={`/listings/${product.id}`}
@@ -122,15 +122,15 @@ function MarketplaceProductCard({
         </button>
       </div>
 
-      <div className="mt-4 flex flex-1 flex-col gap-4">
-        <div className="flex items-center justify-between gap-3">
+      <div className="p-5 flex flex-1 flex-col gap-4">
+        {/* <div className="flex items-center justify-between gap-3">
           <Badge className={purchasePresentation.badgeClassName}>
             {purchasePresentation.badge}
           </Badge>
           <p className="text-xs font-medium text-slate-400">
             {product.listedAtLabel}
           </p>
-        </div>
+        </div> */}
 
         <Link
           href={`/listings/${product.id}`}
@@ -143,7 +143,7 @@ function MarketplaceProductCard({
           />
         </Link>
 
-        <div className="rounded-[22px] bg-slate-50 p-4 ring-1 ring-slate-200/80">
+        {/* <div className="rounded-[22px] bg-slate-50 p-4 ring-1 ring-slate-200/80">
           <p className="text-sm font-medium text-slate-900">
             {purchasePresentation.helperText}
           </p>
@@ -165,23 +165,36 @@ function MarketplaceProductCard({
               View details
             </Link>
           </div>
-        </div>
+        </div> */}
 
         <div className="mt-auto flex items-center justify-between gap-3">
+          {/* LEFT: avatar + name + time */}
           <div className="flex min-w-0 items-center gap-3">
+            {/* Avatar */}
             <div
               className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${product.seller.avatarClassName}`}
             >
               {product.seller.initials}
             </div>
 
+            {/* Name + Time */}
             <div className="min-w-0">
               <p className="truncate text-sm font-medium text-slate-900">
                 {product.seller.name}
               </p>
-              <p className="text-xs text-slate-500">{product.categoryName}</p>
+              <p className="text-xs text-slate-400">
+                {product.listedAtLabel}
+              </p>
             </div>
           </div>
+
+          {/* RIGHT: View details */}
+          <Link
+            href={`/listings/${product.id}`}
+            className="shrink-0 text-sm font-semibold text-blue-700 transition hover:text-blue-800"
+          >
+            View details
+          </Link>
         </div>
       </div>
     </article>
@@ -213,7 +226,7 @@ export default function MarketplaceProductGrid({
   }
 
   return (
-    <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+    <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3 p-8">
       {products.map((product) => {
         const category = categoriesById[product.categoryId];
 

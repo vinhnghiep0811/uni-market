@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
@@ -7,6 +7,7 @@ import {
   ChevronRight,
   GripHorizontal,
   ImagePlus,
+  ImageUp,
   Upload,
   X,
 } from "lucide-react";
@@ -27,6 +28,8 @@ type ImageUploadPanelProps = {
   onMoveImage: (imageId: string, direction: "left" | "right") => void;
 };
 
+const PREVIEW_SLOT_COUNT = 3;
+
 export default function ImageUploadPanel({
   images,
   error,
@@ -37,6 +40,11 @@ export default function ImageUploadPanel({
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragActive, setIsDragActive] = useState(false);
   const imagesRef = useRef(images);
+  const previewSlots = Array.from(
+    { length: PREVIEW_SLOT_COUNT },
+    (_, index) => images[index] ?? null,
+  );
+  const extraImages = images.slice(PREVIEW_SLOT_COUNT);
 
   useEffect(() => {
     imagesRef.current = images;
@@ -63,31 +71,13 @@ export default function ImageUploadPanel({
   };
 
   return (
-    <Card className="overflow-hidden border border-slate-200 bg-white/95 shadow-[0_18px_45px_-32px_rgba(15,23,42,0.4)]">
-      <div className="border-b border-slate-200 bg-gradient-to-br from-blue-950 via-slate-900 to-slate-900 px-6 py-6 text-white">
-        <div className="flex items-start justify-between gap-4">
-          <div className="space-y-2">
-            <p className="text-sm font-medium text-blue-100">Product images</p>
-            <h2 className="text-2xl font-semibold tracking-tight">
-              Help buyers trust what you&apos;re selling
-            </h2>
-            <p className="max-w-lg text-sm leading-6 text-slate-200">
-              Upload up to 10 images. The first image becomes the cover buyers
-              see first in the marketplace.
-            </p>
-          </div>
-          <div className="hidden rounded-2xl border border-white/10 bg-white/10 px-3 py-2 text-xs font-medium text-blue-50 sm:block">
-            {images.length}/{MAX_IMAGES} images
-          </div>
-        </div>
-      </div>
-
-      <div className="space-y-5 p-6">
+    <Card className="overflow-hidden">
+      <div className="space-y-5">
         <button
           type="button"
           className={cn(
-            "flex w-full flex-col items-center justify-center rounded-[28px] border border-dashed px-6 py-10 text-center transition duration-200",
-            "border-slate-300 bg-slate-50 hover:border-blue-300 hover:bg-blue-50/60",
+            "flex w-full flex-col items-center justify-center rounded-[15px] border border-dashed px-6 py-10 text-center transition duration-200",
+            "border-slate-300 bg-slate-100 hover:border-blue-300 hover:bg-blue-50/60",
             isDragActive && "border-blue-400 bg-blue-50",
             error && "border-rose-300 bg-rose-50/60",
           )}
@@ -141,33 +131,37 @@ export default function ImageUploadPanel({
           }}
         />
 
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-          <div>
-            <p className="text-sm font-semibold text-slate-900">
-              Photo checklist
-            </p>
-            <p className="text-xs leading-5 text-slate-500">
-              Use a bright cover shot, add detail angles, and keep the background
-              simple.
-            </p>
-          </div>
-          <div className="rounded-full bg-white px-3 py-1.5 text-xs font-medium text-slate-600 ring-1 ring-slate-200">
-            First image = cover image
-          </div>
-        </div>
-
         {error ? <p className="text-sm text-rose-600">{error}</p> : null}
 
-        {images.length > 0 ? (
-          <div className="grid gap-4 sm:grid-cols-2">
-            {images.map((image, index) => (
+        <div className="grid gap-4 md:grid-cols-3">
+          {previewSlots.map((image, index) => {
+            const isCover = index === 0;
+
+            if (!image) {
+              return (
+                <button
+                  key={`empty-slot-${index}`}
+                  type="button"
+                  onClick={() => inputRef.current?.click()}
+                  className={cn(
+                    "flex h-52 flex-col items-center justify-center rounded-[15px] border border-dashed border-slate-300 bg-slate-50 px-4 text-center transition duration-200 hover:border-blue-300 hover:bg-blue-50/60",
+                    isCover && "md:col-span-1",
+                  )}
+                >
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-slate-500 ring-1 ring-slate-200">
+                    <ImageUp className="h-5 w-5" />
+                  </div>
+                  {/* <p className="mt-4 text-sm font-semibold text-slate-900">
+                    {isCover ? "Cover image slot" : ""}
+                  </p> */}
+                </button>
+              );
+            }
+
+            return (
               <div
                 key={image.id}
-                className={cn(
-                  "group relative overflow-hidden rounded-[24px] border border-slate-200 bg-slate-100 shadow-sm",
-                  index === 0 && "sm:col-span-2",
-                  index === 0 ? "h-52 sm:h-72" : "h-52",
-                )}
+                className="group relative h-52 overflow-hidden rounded-[24px] border border-slate-200 bg-slate-100 shadow-sm"
               >
                 <Image
                   src={image.previewUrl}
@@ -181,12 +175,12 @@ export default function ImageUploadPanel({
                   <span
                     className={cn(
                       "rounded-full px-3 py-1 text-xs font-semibold shadow-sm",
-                      index === 0
+                      isCover
                         ? "bg-blue-950 text-white"
                         : "bg-white/90 text-slate-700",
                     )}
                   >
-                    {index === 0 ? "Cover image" : `Image ${index + 1}`}
+                    {isCover ? "Cover image" : `Image ${index + 1}`}
                   </span>
                   <span className="rounded-full bg-slate-950/65 px-3 py-1 text-xs font-medium text-white backdrop-blur">
                     {Math.round(image.file.size / 1024)} KB
@@ -232,16 +226,95 @@ export default function ImageUploadPanel({
                   </div>
                 </div>
               </div>
-            ))}
-          </div>
-        ) : (
-          <div className="rounded-[28px] border border-slate-200 bg-white p-6 text-sm leading-6 text-slate-500 shadow-sm">
-            No images added yet. A bright, front-facing photo is usually the best
-            cover image for second-hand campus listings.
-          </div>
-        )}
+            );
+          })}
+        </div>
 
-        {images.length > 0 && images.length < MAX_IMAGES ? (
+        {extraImages.length > 0 ? (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-sm font-semibold text-slate-900">
+                Additional images
+              </p>
+              <p className="text-xs text-slate-500">
+                {images.length}/{MAX_IMAGES} uploaded
+              </p>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              {extraImages.map((image, index) => {
+                const absoluteIndex = index + PREVIEW_SLOT_COUNT;
+
+                return (
+                  <div
+                    key={image.id}
+                    className="group relative h-52 overflow-hidden rounded-[24px] border border-slate-200 bg-slate-100 shadow-sm"
+                  >
+                    <Image
+                      src={image.previewUrl}
+                      alt={image.file.name}
+                      fill
+                      unoptimized
+                      className="object-cover"
+                    />
+
+                    <div className="pointer-events-none absolute inset-x-0 top-0 flex items-center justify-between p-4">
+                      <span className="rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm">
+                        Image {absoluteIndex + 1}
+                      </span>
+                      <span className="rounded-full bg-slate-950/65 px-3 py-1 text-xs font-medium text-white backdrop-blur">
+                        {Math.round(image.file.size / 1024)} KB
+                      </span>
+                    </div>
+
+                    <div className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-3 bg-gradient-to-t from-slate-950/80 via-slate-950/35 to-transparent p-4 text-white">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium">
+                          {image.file.name}
+                        </p>
+                        {/* <p className="mt-1 flex items-center gap-1 text-xs text-slate-200">
+                          <GripHorizontal className="h-3.5 w-3.5" />
+                          Reorder to control the cover image
+                        </p> */}
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          aria-label={`Move ${image.file.name} left`}
+                          disabled={absoluteIndex === 0}
+                          className="rounded-full bg-white/15 p-2 transition hover:bg-white/25 disabled:cursor-not-allowed disabled:opacity-40"
+                          onClick={() => onMoveImage(image.id, "left")}
+                        >
+                          <ChevronLeft className="h-4 w-4" />
+                        </button>
+                        <button
+                          type="button"
+                          aria-label={`Move ${image.file.name} right`}
+                          disabled={absoluteIndex === images.length - 1}
+                          className="rounded-full bg-white/15 p-2 transition hover:bg-white/25 disabled:cursor-not-allowed disabled:opacity-40"
+                          onClick={() => onMoveImage(image.id, "right")}
+                        >
+                          <ChevronRight className="h-4 w-4" />
+                        </button>
+                        <button
+                          type="button"
+                          aria-label={`Remove ${image.file.name}`}
+                          className="rounded-full bg-rose-500/85 p-2 text-white transition hover:bg-rose-500"
+                          onClick={() => onRemoveImage(image.id)}
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ) : null}
+
+        {/* {images.length < MAX_IMAGES ? (
           <Button
             type="button"
             variant="secondary"
@@ -251,9 +324,8 @@ export default function ImageUploadPanel({
           >
             Add more images
           </Button>
-        ) : null}
+        ) : null} */}
       </div>
     </Card>
   );
 }
-

@@ -32,7 +32,9 @@ export const CONDITION_OPTIONS: MarketplaceCondition[] = [
   "All",
   "New",
   "Like New",
-  "Used",
+  "Good",
+  "Fair",
+  "Poor",
 ];
 
 const CATEGORY_THEMES = [
@@ -202,8 +204,12 @@ export function mapListingCondition(
       return "New";
     case "LIKE_NEW":
       return "Like New";
-    default:
-      return "Used";
+    case "FAIR":
+      return "Fair";
+    case "GOOD":
+      return "Good";
+    case "POOR":
+      return "Poor";
   }
 }
 

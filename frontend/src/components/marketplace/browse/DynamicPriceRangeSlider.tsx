@@ -12,15 +12,15 @@ export default function DynamicPriceRangeSlider({
   onChange,
 }: DynamicPriceRangeSliderProps) {
   return (
-    <section className="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+    <section className="rounded-3xl">
       <div className="flex items-start justify-between gap-4">
         <div>
           <h2 className="text-base font-semibold text-slate-900">Price Range</h2>
         </div>
 
-        <span className="inline-flex shrink-0 whitespace-nowrap rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+        {/* <span className="inline-flex shrink-0 whitespace-nowrap rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
           {formatPriceRangeLabel(value, ceiling)}
-        </span>
+        </span> */}
       </div>
 
       <div className="mt-5">

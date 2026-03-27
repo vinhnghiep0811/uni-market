@@ -30,7 +30,7 @@ export default function FormField({
           {label}
         </label>
         <span
-          className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${
+          className={`px-2.5 py-1 text-[11px] font-medium ${
             required
               ? "bg-blue-50 text-blue-900"
               : "bg-slate-100 text-slate-500"
