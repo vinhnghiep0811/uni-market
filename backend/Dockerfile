@@ -64,4 +64,4 @@ COPY --from=deps /app/generated ./generated
 COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
 
 EXPOSE 3001
-CMD ["sh", "-c", "npx prisma migrate deploy --config ./prisma.config.ts && node dist/main.js"]
+CMD ["sh", "-c", "npx prisma migrate deploy --config ./prisma.config.ts && node dist/src/main.js"]
