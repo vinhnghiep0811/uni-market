@@ -46,7 +46,7 @@ COPY . .
 ENV NODE_ENV=production
 
 RUN npm run build
-RUN npm prune --omit=dev
+
 
 # --- Stage 4: production ---
 FROM node:20-alpine AS production
@@ -60,8 +60,10 @@ COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/prisma ./prisma
+
+COPY --from=deps /app/generated ./generated
 COPY --from=deps /app/generated ./dist/generated
 COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
 
 EXPOSE 3001
-CMD ["sh", "-c", "npx prisma migrate deploy --config ./prisma.config.ts && node dist/src/main.js"]
+CMD ["sh", "-c", "npx prisma migrate deploy --config ./prisma.config.ts && npx prisma db seed --config ./prisma.config.ts && node dist/src/main.js"]

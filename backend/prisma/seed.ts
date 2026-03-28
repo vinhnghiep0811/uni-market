@@ -1,6 +1,5 @@
 import "dotenv/config";
 import { PrismaPg } from "@prisma/adapter-pg";
-
 import { PrismaClient } from "../generated/prisma/client";
 
 const connectionString = process.env.DATABASE_URL;
@@ -20,6 +19,8 @@ type SeedCategory = {
 };
 
 async function upsertCategory(category: SeedCategory) {
+  console.log(`Seeding category: ${category.slug}`);
+
   const existingCategory = await prisma.category.findFirst({
     where: {
       OR: [{ slug: category.slug }, ...category.legacySlugs.map((slug) => ({ slug }))],
@@ -37,6 +38,7 @@ async function upsertCategory(category: SeedCategory) {
       },
     });
 
+    console.log(`Updated category: ${category.slug}`);
     return;
   }
 
@@ -47,9 +49,13 @@ async function upsertCategory(category: SeedCategory) {
       description: category.description,
     },
   });
+
+  console.log(`Created category: ${category.slug}`);
 }
 
 async function main() {
+  console.log("Start seeding categories...");
+
   const categories: SeedCategory[] = [
     {
       name: "Textbooks & Study Materials",
@@ -86,14 +92,18 @@ async function main() {
   for (const category of categories) {
     await upsertCategory(category);
   }
+
+  const count = await prisma.category.count();
+  console.log(`Category count after seed: ${count}`);
 }
 
 main()
   .then(async () => {
+    console.log("Seed completed");
     await prisma.$disconnect();
   })
   .catch(async (error) => {
-    console.error(error);
+    console.error("Seed failed:", error);
     await prisma.$disconnect();
     process.exit(1);
   });

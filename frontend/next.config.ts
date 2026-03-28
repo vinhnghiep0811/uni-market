@@ -38,6 +38,11 @@ const nextConfig: NextConfig = {
         port: '9002',
         pathname: '/uni-market/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'assets.uni-market.vinhnghiep.site',
+        pathname: '/**',
+      },
     ],
   },
 };
