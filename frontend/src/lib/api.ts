@@ -10,6 +10,7 @@ type RequestOptions = {
 };
 
 let accessToken: string | null = null;
+let refreshPromise: Promise<string | null> | null = null;
 
 export function setAccessToken(token: string) {
     accessToken = token;
@@ -19,48 +20,65 @@ export function clearAccessToken() {
     accessToken = null;
 }
 
+export function getAccessToken() {
+  return accessToken;
+}
+
 function isFormDataBody(body: unknown): body is FormData {
     return typeof FormData !== "undefined" && body instanceof FormData;
 }
 
-// 🔥 gọi refresh token
-async function refreshAccessToken(): Promise<string | null> {
-    try {
-        const res = await fetch(`${API_URL}/auth/refresh`, {
-            method: "POST",
-            credentials: "include",
-        });
+export async function refreshAccessToken(): Promise<string | null> {
+    if (refreshPromise) return refreshPromise;
 
-        if (!res.ok) return null;
+    refreshPromise = (async () => {
+        try {
+            const res = await fetch(`${API_URL}/auth/refresh`, {
+                method: "POST",
+                credentials: "include",
+            });
 
-        const data = await res.json();
-        setAccessToken(data.accessToken);
+            if (!res.ok) {
+                clearAccessToken();
+                return null;
+            }
 
-        return data.accessToken;
-    } catch {
-        return null;
-    }
+            const data = await res.json();
+            setAccessToken(data.accessToken);
+            return data.accessToken;
+        } catch {
+            clearAccessToken();
+            return null;
+        } finally {
+            refreshPromise = null;
+        }
+    })();
+
+    return refreshPromise;
 }
 
 export async function apiRequest<T>(
     endpoint: string,
     options: RequestOptions = {},
-    retry = true, // 🔥 tránh loop vô hạn
+    retry = true,
 ): Promise<T> {
     const { method = "GET", body } = options;
     const useFormData = isFormDataBody(body);
 
+    const headers: Record<string, string> = {};
+
+    if (!useFormData && body !== undefined) {
+        headers["Content-Type"] = "application/json";
+    }
+
+    if (accessToken) {
+        headers["Authorization"] = `Bearer ${accessToken}`;
+    }
+
     const response = await fetch(`${API_URL}${endpoint}`, {
         method,
         credentials: "include",
-        headers: {
-            ...(!useFormData && body !== undefined
-                ? { "Content-Type": "application/json" }
-                : {}),
-            ...(accessToken && {
-                Authorization: `Bearer ${accessToken}`,
-            }),
-        },
+        headers,
         body:
             body === undefined
                 ? undefined
@@ -69,17 +87,19 @@ export async function apiRequest<T>(
                     : JSON.stringify(body),
     });
 
-    // 🔥 nếu token hết hạn
     if (response.status === 401 && retry) {
         const newToken = await refreshAccessToken();
 
         if (newToken) {
-            // 🔁 retry request với token mới
             return apiRequest<T>(endpoint, options, false);
-        } else {
-            clearAccessToken();
-            throw new Error("Unauthorized");
         }
+
+        clearAccessToken();
+        throw new Error("Unauthorized");
+    }
+
+    if (response.status === 204) {
+        return null as T;
     }
 
     const data = await response.json().catch(() => null);

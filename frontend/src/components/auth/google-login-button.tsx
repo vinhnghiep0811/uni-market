@@ -15,11 +15,11 @@ export default function GoogleLoginButton() {
                 onSuccess={async (credentialResponse) => {
                     try {
                         const idToken = credentialResponse.credential!;
-                        console.log(idToken);
+                        // console.log(idToken);
                         const res = await loginWithGoogle(idToken);
 
                         // setCurrentUser(res.user);
-          		await refreshUser();
+          		        await refreshUser();
                         router.push("/");
                     } catch (err) {
                         console.error(err);

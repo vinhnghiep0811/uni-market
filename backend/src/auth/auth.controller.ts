@@ -16,7 +16,7 @@ import { LoginDto } from './dto/login.dto';
 import { GoogleLoginDto } from './dto/google-login.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { CurrentUser } from './current-user.decorator';
-
+const isProd = process.env.NODE_ENV === 'production';
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) { }
@@ -91,8 +91,8 @@ export class AuthController {
 
     res.cookie('refresh_token', refreshToken, {
       httpOnly: true,
-      secure: true, // dev
-      sameSite: 'none',
+      secure: isProd,
+      sameSite: isProd ? 'none' : 'lax',
       path: '/auth/refresh',
       maxAge: 1000 * 60 * 60 * 24 * 7,
     });
@@ -114,8 +114,8 @@ export class AuthController {
   @Post('logout')
   async logout(@Res({ passthrough: true }) res: Response) {
     res.clearCookie('refresh_token', {
-    path: '/auth/refresh',
-  });
+      path: '/auth/refresh',
+    });
 
     return { message: 'Logged out successfully' };
   }

@@ -10,7 +10,7 @@ import {
 } from "react";
 import { getMe, logout } from "@/lib/auth";
 import { AuthUser } from "@/types/auth";
-import { apiRequest, setAccessToken } from "@/lib/api";
+import { apiRequest, setAccessToken, clearAccessToken, refreshAccessToken , getAccessToken} from "@/lib/api";
 
 type AuthContextType = {
   user: AuthUser | null;
@@ -31,29 +31,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const requestId = ++requestIdRef.current;
 
     try {
-      try {
-        const me = await getMe();
-        if (requestId === requestIdRef.current) {
-          setUser(me);
-        }
-        return;
-      } catch {}
+      const existingToken = getAccessToken();
 
-      try {
-        const res = await apiRequest<{ accessToken: string }>("/auth/refresh", {
-          method: "POST",
-        });
-
-        setAccessToken(res.accessToken);
-
-        const me = await getMe();
-        if (requestId === requestIdRef.current) {
-          setUser(me);
+      if (!existingToken) {
+        const token = await refreshAccessToken();
+        if (!token) {
+          if (requestId === requestIdRef.current) {
+            setUser(null);
+          }
+          return;
         }
-      } catch {
-        if (requestId === requestIdRef.current) {
-          setUser(null);
-        }
+      }
+
+      const me = await getMe();
+
+      if (requestId === requestIdRef.current) {
+        setUser(me);
+      }
+    } catch {
+      if (requestId === requestIdRef.current) {
+        setUser(null);
       }
     } finally {
       if (requestId === requestIdRef.current) {
@@ -67,21 +64,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const refreshUser = async () => {
+    setIsLoading(true);
     await fetchMe();
   };
 
   const logoutUser = async () => {
-    await logout();
-    setUser(null);
-    setIsLoading(false);
+    try {
+      await logout();
+    } finally {
+      clearAccessToken();
+      requestIdRef.current += 1;
+      setUser(null);
+      setIsLoading(false);
+    }
   };
-  
+
   const setCurrentUser = (nextUser: AuthUser | null) => {
-    console.log("setCurrentUser", nextUser);
     requestIdRef.current += 1;
     setUser(nextUser);
     setIsLoading(false);
-  };  
+  };
 
   return (
     <AuthContext.Provider
