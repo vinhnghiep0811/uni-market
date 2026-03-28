@@ -7,8 +7,8 @@ import { useAuth } from "@/context/AuthContext";
 import { getMe } from "@/lib/auth";
 export default function GoogleLoginButton() {
     const router = useRouter();
+    const { setCurrentUser } = useAuth();
     const { refreshUser } = useAuth();
-
     return (
         <div className="flex justify-center">
             <GoogleLogin
@@ -18,9 +18,8 @@ export default function GoogleLoginButton() {
                         console.log(idToken);
                         const res = await loginWithGoogle(idToken);
 
-                        const me = await getMe();
-                        console.log("me:", me); // 🔥 cập nhật user global
-                        await refreshUser();
+                        // setCurrentUser(res.user);
+          		await refreshUser();
                         router.push("/");
                     } catch (err) {
                         console.error(err);

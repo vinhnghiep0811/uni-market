@@ -21,7 +21,7 @@ export default function ProtectedRoute({
     if (isLoading) {
         return <div className="p-6">Loading...</div>;
     }
-
+    console.log("ProtectedRoute", { user, isLoading });	
     if (!user) {
         return null; // đang redirect
     }
