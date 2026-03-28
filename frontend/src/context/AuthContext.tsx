@@ -31,27 +31,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const requestId = ++requestIdRef.current;
 
     try {
-      const me = await getMe();
-      if (requestId === requestIdRef.current) {
-        setUser(me);
-      }
-      return;
-    } catch {}
+      try {
+        const me = await getMe();
+        if (requestId === requestIdRef.current) {
+          setUser(me);
+        }
+        return;
+      } catch {}
 
-    try {
-      const res = await apiRequest<{ accessToken: string }>("/auth/refresh", {
-        method: "POST",
-      });
+      try {
+        const res = await apiRequest<{ accessToken: string }>("/auth/refresh", {
+          method: "POST",
+        });
 
-      setAccessToken(res.accessToken);
+        setAccessToken(res.accessToken);
 
-      const me = await getMe();
-      if (requestId === requestIdRef.current) {
-        setUser(me);
-      }
-    } catch {
-      if (requestId === requestIdRef.current) {
-        setUser(null);
+        const me = await getMe();
+        if (requestId === requestIdRef.current) {
+          setUser(me);
+        }
+      } catch {
+        if (requestId === requestIdRef.current) {
+          setUser(null);
+        }
       }
     } finally {
       if (requestId === requestIdRef.current) {
@@ -83,7 +85,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, isLoading, refreshUser, logoutUser, setCurrentUser: setUser }}
+      value={{ user, isLoading, refreshUser, logoutUser, setCurrentUser }}
     >
       {children}
     </AuthContext.Provider>
