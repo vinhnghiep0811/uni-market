@@ -610,7 +610,7 @@ function AuthenticatedProfileContent({
               <>
                 {listingFeedbackMessage ? (
                   <Card
-                    className={`ml-8 p-4 text-sm ${
+                    className={`ml-8 p-4 mb-0 text-sm ${
                       listingFeedbackTone === "success"
                         ? "border border-emerald-100 bg-emerald-50 text-emerald-700"
                         : "border border-rose-100 bg-rose-50 text-rose-600"
@@ -662,7 +662,7 @@ function AuthenticatedProfileContent({
               <>
                 {transactionFeedbackMessage ? (
                   <Card
-                    className={`py-4 px-8 text-sm ${
+                    className={`ml-8 p-4 mb-0 text-sm ${
                       transactionFeedbackTone === "success"
                         ? "border border-emerald-100 bg-emerald-50 text-emerald-700"
                         : "border border-rose-100 bg-rose-50 text-rose-600"
