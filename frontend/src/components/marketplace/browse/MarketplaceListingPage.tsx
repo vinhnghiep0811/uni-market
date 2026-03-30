@@ -446,8 +446,8 @@ export default function MarketplaceListingPage() {
         }}
       />
 
-      <section id="marketplace-listings" className="px-6 py-8">
-        <div className="grid gap-6 lg:grid-cols-[260px_minmax(0,1fr)]">
+      <section id="marketplace-listings" className="px-8 py-8">
+        <div className="grid gap-20 lg:grid-cols-[260px_minmax(0,1fr)]">
           <FilterSidebar
             categories={categories}
             selectedCategoryIds={selectedCategoryIds}

@@ -9,6 +9,11 @@ import type { ListingStatus } from "@/lib/transactions";
 
 const PROFILE_FALLBACK_IMAGE = "/images/download.jpg";
 
+function getPrimaryImageSrc(images: ManagedProfileListingApi["images"]) {
+  const primaryImage = images.find((image) => image.imageUrl.trim().length > 0);
+  return primaryImage?.imageUrl ?? PROFILE_FALLBACK_IMAGE;
+}
+
 function formatRelativeTime(value: string) {
   const updatedAt = new Date(value).getTime();
 
@@ -94,7 +99,7 @@ export function mapManagedProfileListing(
     title: listing.title,
     description: listing.description,
     price: normalizePrice(listing.price),
-    imageSrc: PROFILE_FALLBACK_IMAGE,
+    imageSrc: getPrimaryImageSrc(listing.images),
     imageAlt: listing.title,
     categoryId: listing.categoryId,
     backendStatus: listing.status,

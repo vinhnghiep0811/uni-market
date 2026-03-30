@@ -8,7 +8,7 @@ export default function Card({ className, ...props }: CardProps) {
   return (
     <div
       className={cn(
-        "rounded-[15px]", 
+        "rounded-[10px]", 
         className,
       )}
       {...props}

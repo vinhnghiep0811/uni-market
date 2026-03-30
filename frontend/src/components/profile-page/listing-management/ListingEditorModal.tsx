@@ -54,7 +54,7 @@ export default function ListingEditorModal({
   return (
     <div className="fixed inset-0 z-[60] overflow-y-auto bg-slate-950/55 px-4 py-6 backdrop-blur-sm sm:px-6">
       <div className="mx-auto max-w-4xl space-y-4">
-        <div className="flex items-start justify-between gap-4 rounded-[28px] bg-white px-6 py-5 shadow-2xl ring-1 ring-slate-200">
+        <div className="flex items-start justify-between gap-4 rounded-[10px] bg-white px-6 py-5 shadow-2xl ring-1 ring-slate-200">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.16em] text-blue-700">
               Edit listing
@@ -77,7 +77,7 @@ export default function ListingEditorModal({
           </button>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-4 bg-white rounded-[10px]">
           <ListingForm
             values={values}
             errors={errors}
@@ -88,7 +88,7 @@ export default function ListingEditorModal({
             onFieldChange={onChangeField}
           />
 
-          <Card className="p-5">
+          <Card className="p-8">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="min-h-6 text-sm">
                 {feedbackMessage ? (

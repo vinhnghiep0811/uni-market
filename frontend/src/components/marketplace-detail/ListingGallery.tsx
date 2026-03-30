@@ -3,7 +3,6 @@
 
 import { useState } from "react";
 
-import Badge from "@/components/ui/Badge";
 import Card from "@/components/ui/Card";
 import { cn } from "@/components/ui/cn";
 
@@ -12,15 +11,11 @@ import type { ListingDetailImage } from "./types";
 type ListingGalleryProps = {
   images: ListingDetailImage[];
   title: string;
-  availabilityLabel: string;
-  statusBadgeClassName: string;
 };
 
 export default function ListingGallery({
   images,
   title,
-  availabilityLabel,
-  statusBadgeClassName,
 }: ListingGalleryProps) {
   const [selectedImageId, setSelectedImageId] = useState(images[0]?.id ?? "");
 
@@ -31,10 +26,6 @@ export default function ListingGallery({
     <section className="space-y-4">
       <Card className="overflow-hidden p-3 sm:p-4">
         <div className="relative overflow-hidden rounded-[28px] bg-slate-100">
-          <div className="absolute left-4 top-4 z-10">
-            <Badge className={statusBadgeClassName}>{availabilityLabel}</Badge>
-          </div>
-
           <div className="aspect-[5/4] w-full bg-[radial-gradient(circle_at_top,#dbeafe,transparent_55%),linear-gradient(180deg,#f8fafc_0%,#e2e8f0_100%)]">
             <img
               src={selectedImage.imageUrl}
@@ -45,7 +36,7 @@ export default function ListingGallery({
         </div>
       </Card>
 
-      <div className="grid grid-cols-4 gap-3 sm:grid-cols-5 lg:grid-cols-4 xl:grid-cols-5">
+      <div className="grid grid-cols-4 gap-3 sm:grid-cols-5 lg:grid-cols-4 xl:grid-cols-5 p-3 sm:p-4">
         {images.slice(0, 6).map((image, index) => {
           const isActive = image.id === selectedImage.id;
 

@@ -220,7 +220,7 @@ export default function FavoritesPage() {
         {isLoading ? (
           <FavoritesLoadingState />
         ) : (
-          <div className="grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
+          <div className="grid gap-20 lg:grid-cols-[280px_minmax(0,1fr)]">
             <aside className={`${isFiltersOpen ? "block" : "hidden"} lg:block`}>
               <div className="lg:sticky lg:top-24">
                 <FavoritesSidebar

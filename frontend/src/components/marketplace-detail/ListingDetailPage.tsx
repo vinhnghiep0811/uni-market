@@ -5,10 +5,18 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import Card from "@/components/ui/Card";
+import { useAuth } from "@/context/AuthContext";
 import { apiRequest } from "@/lib/api";
+import {
+  isActiveTransactionStatus,
+  type TransactionListResponse,
+  type TransactionMutationResponse,
+  type TransactionStatus,
+} from "@/lib/transactions";
 
 import ListingGallery from "./ListingGallery";
 import ListingHighlights from "./ListingHighlights";
+import ListingSafetyNotice from "./ListingSafetyNotice";
 import ListingSellerPanel from "./ListingSellerPanel";
 import type { ListingDetailApi, ListingDetailViewModel } from "./types";
 import { mapListingDetail } from "./utils";
@@ -56,9 +64,16 @@ function ListingDetailLoadingState() {
 export default function ListingDetailPage({
   listingId,
 }: ListingDetailPageProps) {
+  const { user } = useAuth();
+  const currentUserId = user?.id ?? null;
   const [listing, setListing] = useState<ListingDetailViewModel | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isFavoritePending, setIsFavoritePending] = useState(false);
+  const [purchaseStatus, setPurchaseStatus] = useState<TransactionStatus | null>(null);
+  const [isPurchasePending, setIsPurchasePending] = useState(false);
+  const [purchaseFeedback, setPurchaseFeedback] = useState<string | null>(null);
+  const [purchaseFeedbackTone, setPurchaseFeedbackTone] = useState<
+    "success" | "error"
+  >("success");
   const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -67,15 +82,28 @@ export default function ListingDetailPage({
     const loadListing = async () => {
       setIsLoading(true);
       setLoadError(null);
+      setPurchaseFeedback(null);
+      setPurchaseStatus(null);
 
       try {
-        const response = await apiRequest<ListingDetailApi>(`/listings/${listingId}`);
+        const [response, myRequests] = await Promise.all([
+          apiRequest<ListingDetailApi>(`/listings/${listingId}`),
+          currentUserId
+            ? apiRequest<TransactionListResponse>("/transactions/my-requests")
+            : Promise.resolve(null),
+        ]);
 
         if (!isMounted) {
           return;
         }
 
         setListing(mapListingDetail(response));
+        const activeRequest = myRequests?.data.find(
+          (transaction) =>
+            transaction.listingId === listingId &&
+            isActiveTransactionStatus(transaction.status),
+        );
+        setPurchaseStatus(activeRequest?.status ?? null);
       } catch (error) {
         if (!isMounted) {
           return;
@@ -99,41 +127,47 @@ export default function ListingDetailPage({
     return () => {
       isMounted = false;
     };
-  }, [listingId]);
+  }, [currentUserId, listingId]);
 
-  const handleToggleFavorite = async () => {
-    if (!listing || isFavoritePending) {
+  const handlePurchase = async () => {
+    if (!listing || isPurchasePending) {
       return;
     }
 
-    const nextFavoriteState = !listing.isFavorited;
+    if (!currentUserId) {
+      setPurchaseFeedback("Please log in to create a purchase request.");
+      setPurchaseFeedbackTone("error");
+      return;
+    }
 
-    setIsFavoritePending(true);
-    setListing((currentListing) =>
-      currentListing
-        ? {
-            ...currentListing,
-            isFavorited: nextFavoriteState,
-          }
-        : currentListing,
-    );
+    if (listing.seller.id === currentUserId) {
+      setPurchaseFeedback("You cannot create an order for your own listing.");
+      setPurchaseFeedbackTone("error");
+      return;
+    }
+
+    setPurchaseFeedback(null);
+    setIsPurchasePending(true);
 
     try {
-      await apiRequest(`/favorites/${listing.id}`, {
-        method: nextFavoriteState ? "POST" : "DELETE",
-      });
-    } catch (error) {
-      setListing((currentListing) =>
-        currentListing
-          ? {
-              ...currentListing,
-              isFavorited: !nextFavoriteState,
-            }
-          : currentListing,
+      const response = await apiRequest<TransactionMutationResponse>(
+        "/transactions",
+        {
+          method: "POST",
+          body: { listingId: listing.id },
+        },
       );
-      console.error("Could not update favorite status.", error);
+
+      setPurchaseStatus(response.data?.status ?? "PENDING");
+      setPurchaseFeedback("Purchase request sent. Track it in your profile.");
+      setPurchaseFeedbackTone("success");
+    } catch (error) {
+      setPurchaseFeedback(
+        error instanceof Error ? error.message : "Could not create request.",
+      );
+      setPurchaseFeedbackTone("error");
     } finally {
-      setIsFavoritePending(false);
+      setIsPurchasePending(false);
     }
   };
 
@@ -170,36 +204,37 @@ export default function ListingDetailPage({
 
         {!isLoading && listing ? (
           <div className="space-y-6">
-            <div className="flex flex-wrap items-center gap-2 text-sm text-slate-500">
-              <Link href="/" className="transition hover:text-slate-900">
-                Home
-              </Link>
-              <span>&gt;</span>
-              <Link
-                href="/#marketplace-listings"
-                className="transition hover:text-slate-900"
-              >
-                {listing.categoryName}
-              </Link>
-              <span>&gt;</span>
-              <span className="max-w-full truncate text-slate-400">
-                {listing.title}
-              </span>
-            </div>
-
             <div className="grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
-              <ListingGallery
-                images={listing.images}
-                title={listing.title}
-                availabilityLabel={listing.availabilityLabel}
-                statusBadgeClassName={listing.statusBadgeClassName}
-              />
-
               <div className="space-y-5">
+                <ListingGallery images={listing.images} title={listing.title} />
+                <ListingSafetyNotice />
+              </div>
+
+              <div className="space-y-2 py-4">
+                <div className="flex flex-wrap items-center gap-2 px-8 text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
+                  <Link href="/" className="transition hover:text-slate-900">
+                    Home
+                  </Link>
+                  <span>&gt;</span>
+                  <Link
+                    href="/#marketplace-listings"
+                    className="transition hover:text-slate-900"
+                  >
+                    {listing.categoryName}
+                  </Link>
+                  <span>&gt;</span>
+                  <span className="max-w-full truncate text-slate-500">
+                    {listing.title}
+                  </span>
+                </div>
                 <ListingHighlights
                   listing={listing}
-                  isFavoritePending={isFavoritePending}
-                  onToggleFavorite={handleToggleFavorite}
+                  purchaseStatus={purchaseStatus}
+                  isPurchasePending={isPurchasePending}
+                  purchaseFeedback={purchaseFeedback}
+                  purchaseFeedbackTone={purchaseFeedbackTone}
+                  isOwnedByCurrentUser={listing.seller.id === currentUserId}
+                  onPurchase={handlePurchase}
                 />
                 <ListingSellerPanel listing={listing} />
               </div>

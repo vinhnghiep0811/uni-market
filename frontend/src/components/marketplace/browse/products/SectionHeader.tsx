@@ -15,7 +15,7 @@ export default function SectionHeader({
   onChangeSort,
 }: SectionHeaderProps) {
   return (
-    <div className="flex flex-col px-8 sm:flex-row sm:items-end sm:justify-between">
+    <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between">
       <div>
         <h1 className="text-3xl font-semibold text-slate-900">
           Explore Items

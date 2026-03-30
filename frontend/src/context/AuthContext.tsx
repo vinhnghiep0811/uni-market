@@ -10,7 +10,7 @@ import {
 } from "react";
 import { getMe, logout } from "@/lib/auth";
 import { AuthUser } from "@/types/auth";
-import { apiRequest, setAccessToken, clearAccessToken, refreshAccessToken , getAccessToken} from "@/lib/api";
+import { apiRequest, setAccessToken, clearAccessToken, refreshAccessToken, getAccessToken } from "@/lib/api";
 
 type AuthContextType = {
   user: AuthUser | null;
@@ -35,6 +35,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (!existingToken) {
         const token = await refreshAccessToken();
+
         if (!token) {
           if (requestId === requestIdRef.current) {
             setUser(null);
@@ -48,9 +49,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (requestId === requestIdRef.current) {
         setUser(me);
       }
-    } catch {
-      if (requestId === requestIdRef.current) {
+    } catch (error) {
+      if (requestId !== requestIdRef.current) return;
+
+      const message =
+        error instanceof Error ? error.message : "Unknown error";
+
+      if (message === "Unauthorized") {
         setUser(null);
+        clearAccessToken();
+      } else {
+        console.error("fetchMe failed:", error);
       }
     } finally {
       if (requestId === requestIdRef.current) {

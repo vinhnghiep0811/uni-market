@@ -200,7 +200,7 @@ function TransactionSection({
 
   return (
     <div className="space-y-4">
-      <Card className="p-6 sm:p-7">
+      <Card className="p-8">
         <div className="flex items-center gap-3">
           <div className="rounded-2xl bg-slate-100 p-2.5 text-slate-700">
             {icon}
@@ -220,7 +220,7 @@ function TransactionSection({
         const imageUrl = transaction.listing.images[0]?.imageUrl ?? FALLBACK_IMAGE;
 
         return (
-          <Card key={transaction.id} className="p-4 sm:p-5">
+          <Card key={transaction.id} className="px-8">
             <div className="flex flex-col gap-4 lg:flex-row">
               <div className="h-28 overflow-hidden rounded-[22px] bg-slate-100 lg:w-32 lg:shrink-0">
                 <img
@@ -438,7 +438,7 @@ export default function TransactionsPanel({
   return (
     <div className="space-y-6">
       <TransactionSection
-        title="Orders I placed"
+        title="My Orders"
         description="Track requests you sent to sellers, cancel them, or confirm when the trade is done."
         emptyTitle="No purchase requests yet"
         emptyDescription="When you press Dat mua on the home page, the order will appear here."
@@ -469,7 +469,7 @@ export default function TransactionsPanel({
         onConfirmSold={onConfirmSold}
       />
 
-      {(buyerTransactions.length > 0 || sellerTransactions.length > 0) && (
+      {/* {(buyerTransactions.length > 0 || sellerTransactions.length > 0) && (
         <Card className="border border-slate-200 bg-slate-50 p-5 text-sm text-slate-600">
           <div className="flex items-start gap-3">
             <div className="rounded-2xl bg-white p-2 text-slate-700 ring-1 ring-slate-200">
@@ -482,9 +482,9 @@ export default function TransactionsPanel({
             </div>
           </div>
         </Card>
-      )}
+      )} */}
 
-      {(buyerTransactions.length > 0 || sellerTransactions.length > 0) && (
+      {/* {(buyerTransactions.length > 0 || sellerTransactions.length > 0) && (
         <Card className="border border-rose-100 bg-rose-50/60 p-5 text-sm text-rose-700">
           <div className="flex items-start gap-3">
             <div className="rounded-2xl bg-white p-2 text-rose-700 ring-1 ring-rose-100">
@@ -497,7 +497,7 @@ export default function TransactionsPanel({
             </p>
           </div>
         </Card>
-      )}
+      )} */}
     </div>
   );
 }

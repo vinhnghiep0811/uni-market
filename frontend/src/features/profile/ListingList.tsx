@@ -38,7 +38,7 @@ export default function ListingList({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 py-10 px-10">
       {listings.map((listing) => (
         <ListingCard
           key={listing.id}

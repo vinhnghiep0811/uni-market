@@ -93,7 +93,7 @@ export class AuthController {
       httpOnly: true,
       secure: isProd,
       sameSite: isProd ? 'none' : 'lax',
-      path: '/auth/refresh',
+      path: '/',
       maxAge: 1000 * 60 * 60 * 24 * 7,
     });
 
@@ -122,8 +122,10 @@ export class AuthController {
 
   @Post('refresh')
   async refresh(@Req() req: Request) {
+    console.log('refresh cookies:', req.cookies);
+    console.log('refresh cookie header:', req.headers.cookie);
     const token = req.cookies['refresh_token'];
-
+    console.log('has refresh token:', !!token);
     if (!token) throw new UnauthorizedException();
 
     return this.authService.refresh(token);

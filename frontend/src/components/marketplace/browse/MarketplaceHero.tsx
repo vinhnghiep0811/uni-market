@@ -26,7 +26,7 @@ export default function MarketplaceHero({
   };
 
   return (
-    <section className="px-6 pt-6">
+    <section className="px-8 pt-6">
       <div className="grid w-full overflow-hidden rounded-[32px] border border-slate-200/10 lg:grid-cols-[2fr_1fr]">
         <div className="relative flex items-center overflow-hidden bg-slate-800 px-6 py-12 text-white sm:px-10 lg:px-14 lg:py-16">
           <div className="absolute inset-0">

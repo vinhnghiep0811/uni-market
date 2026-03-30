@@ -18,7 +18,7 @@ type ProfileHeaderProps = {
 
 export default function ProfileHeader({ user }: ProfileHeaderProps) {
   return (
-    <Card className="p-6 sm:p-7">
+    <Card className="sm:p-7">
       <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
           <div className="relative flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full bg-slate-200 text-xl font-semibold text-slate-700">

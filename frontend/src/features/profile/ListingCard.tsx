@@ -32,19 +32,19 @@ export default function ListingCard({
   const isArchivedView = activeTab === "archived-sold";
 
   return (
-    <Card className="p-4 transition duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-slate-200/70 sm:p-5">
-      <div className="flex flex-col gap-4 sm:flex-row">
-        <div className="relative h-28 w-full shrink-0 overflow-hidden rounded-[22px] sm:w-28">
+    <Card className="overflow-hidden bg-white transition duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-slate-200/70">
+      <div className="flex flex-col sm:flex-row">
+        <div className="relative aspect-square w-full shrink-0 overflow-hidden bg-slate-100 sm:w-44">
           <Image
             src={listing.imageSrc}
             alt={listing.imageAlt}
             fill
-            sizes="(max-width: 640px) 100vw, 112px"
+            sizes="(max-width: 640px) 100vw, 176px"
             className="object-cover"
           />
         </div>
 
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0 flex-1 p-4 sm:p-5">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div className="min-w-0">
               <Badge className={listing.categoryClassName}>
@@ -102,3 +102,4 @@ export default function ListingCard({
     </Card>
   );
 }
+

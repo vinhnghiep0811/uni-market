@@ -14,7 +14,7 @@ export default function Pagination({
   const pages = Array.from({ length: totalPages }, (_, index) => index + 1);
 
   return (
-    <div className="flex flex-col gap-3 rounded-3xl px-8 py-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex flex-col gap-3 rounded-3xl py-4 sm:flex-row sm:items-center sm:justify-between">
       <p className="text-sm text-slate-500">
         Page {currentPage} of {totalPages}
       </p>

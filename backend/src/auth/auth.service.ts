@@ -151,19 +151,28 @@ export class AuthService {
     }
 
     async refresh(refreshToken: string) {
-        const payload = await this.jwtService.verifyAsync(refreshToken, {
-            secret: process.env.JWT_REFRESH_SECRET,
-        });
+        try {
+            const payload = await this.jwtService.verifyAsync(refreshToken, {
+                secret: process.env.JWT_REFRESH_SECRET,
+            });
 
-        const user = await this.prisma.user.findUnique({
-            where: { id: payload.sub },
-        });
+            console.log('refresh payload:', payload);
 
-        if (!user) throw new UnauthorizedException();
+            const user = await this.prisma.user.findUnique({
+                where: { id: payload.sub },
+            });
 
-        const accessToken = await this.signAccessToken(user.id, user.email);
+            console.log('refresh user found:', !!user);
 
-        return { accessToken };
+            if (!user) throw new UnauthorizedException();
+
+            const accessToken = await this.signAccessToken(user.id, user.email);
+
+            return { accessToken };
+        } catch (error) {
+            console.error('refresh verify failed:', error);
+            throw new UnauthorizedException();
+        }
     }
 
     async getProfile(userId: string) {

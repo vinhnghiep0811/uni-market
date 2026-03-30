@@ -93,7 +93,7 @@ function DashboardTabs({
   onChangeTab: (tab: DashboardTab) => void;
 }) {
   return (
-    <Card className="p-2">
+    <Card className="px-8">
       <div className="flex flex-wrap gap-2">
         {dashboardTabs.map((tab) => {
           const isActive = tab.id === activeTab;
@@ -107,7 +107,7 @@ function DashboardTabs({
                 "rounded-full px-4 py-2 text-sm font-medium transition duration-200",
                 isActive
                   ? "bg-slate-900 text-white shadow-sm"
-                  : "text-slate-500 hover:bg-slate-100 hover:text-slate-900",
+                  : "bg-slate-200 text-slate-500 hover:bg-slate-100 hover:text-slate-900",
               )}
             >
               {tab.label}
@@ -600,7 +600,7 @@ function AuthenticatedProfileContent({
 
   return (
     <>
-      <section className="min-h-[calc(100vh-73px)] bg-[#f8fafc] px-6 py-8">
+      <section className="min-h-[calc(100vh-73px)] bg-[#f8fafc] sm:px-6 lg:px-8 px-4 py-8">
         <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
           <div className="space-y-5">
             <ProfileHeader user={profileUser} />
@@ -610,7 +610,7 @@ function AuthenticatedProfileContent({
               <>
                 {listingFeedbackMessage ? (
                   <Card
-                    className={`p-4 text-sm ${
+                    className={`ml-8 p-4 text-sm ${
                       listingFeedbackTone === "success"
                         ? "border border-emerald-100 bg-emerald-50 text-emerald-700"
                         : "border border-rose-100 bg-rose-50 text-rose-600"
@@ -662,7 +662,7 @@ function AuthenticatedProfileContent({
               <>
                 {transactionFeedbackMessage ? (
                   <Card
-                    className={`p-4 text-sm ${
+                    className={`py-4 px-8 text-sm ${
                       transactionFeedbackTone === "success"
                         ? "border border-emerald-100 bg-emerald-50 text-emerald-700"
                         : "border border-rose-100 bg-rose-50 text-rose-600"
